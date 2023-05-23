@@ -7,7 +7,7 @@ This guide explains how to Integrate the SD-CORE User Plane with the Canonical O
 - Juju >= 3.0
 - Kubernetes >= 1.25
 - Multus
-- The `sdcore-user-plane` bunde deployed in the `user-plane` model
+- The `sdcore-user-plane` bundle deployed in the `user-plane` model
 
 ## Deploy the `cos-lite` bundle
 
