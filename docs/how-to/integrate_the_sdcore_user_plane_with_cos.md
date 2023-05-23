@@ -48,5 +48,3 @@ You can now see metrics coming from the UPF in your Grafana dashboard.
 :width: 700px
 :align: center
 ```
-
-[Grafana UPF]: ../images/grafana_upf.png
