@@ -1,7 +1,6 @@
-# Deploy the SD-CORE UPF
+# Deploy the SD-CORE User Plane
 
-This guide explains how to deploy the SD-CORE UPF charmed operator as a standalone network 
-function on Kubernetes.
+This guide explains how to deploy the SD-CORE User Plane charm bundle.
 
 ## Requirements
 
@@ -9,7 +8,7 @@ function on Kubernetes.
 - Kubernetes >= 1.25
 - Multus
 
-## Deploy the UPF
+## Deploy the SD-CORE User Plane
 
 Enable Multus on MicroK8s
 
@@ -24,10 +23,10 @@ Create a Juju model:
 juju add-model user-plane
 ```
 
-Deploy the UPF:
+Deploy the `sdcore-user-plane` charm bundle:
 
 ```bash
-juju deploy sdcore-upf --trust --channel=edge
+juju deploy sdcore-user-plane --trust --channel=edge
 ```
 
 The UPF is ready when the charm is in the `Active/Idle` state.
