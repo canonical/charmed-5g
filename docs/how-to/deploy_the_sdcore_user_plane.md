@@ -1,14 +1,14 @@
-# Deploy the SD-CORE User Plane
+# Deploy the SD-Core User Plane
 
-This guide explains how to deploy the SD-CORE User Plane charm bundle.
+This guide explains how to deploy the SD-Core User Plane charm bundle.
 
 ## Requirements
 
-- Juju >= 3.0
+- Juju >= 3.1
 - Kubernetes >= 1.25
 - Multus
 
-## Deploy the SD-CORE User Plane
+## Deploy the SD-Core User Plane
 
 Enable Multus on MicroK8s
 

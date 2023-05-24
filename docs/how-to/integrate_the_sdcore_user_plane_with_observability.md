@@ -1,10 +1,10 @@
-# Integrate the SD-CORE User Plane with COS
+# Integrate the SD-Core User Plane with Observability
 
-This guide explains how to Integrate the SD-CORE User Plane with the Canonical Observability Stack (COS).
+This guide explains how to Integrate the SD-Core User Plane with the Canonical Observability Stack (COS).
 
 ## Requirements
 
-- Juju >= 3.0
+- Juju >= 3.1
 - Kubernetes >= 1.25
 - Multus
 - The `sdcore-user-plane` bundle deployed in the `user-plane` model
