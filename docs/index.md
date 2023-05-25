@@ -3,7 +3,7 @@
 Charmed 5G is a secure, reliable and observable open source 5G network.
 
 Charmed 5G is built using some of the [Open Networking Foundation](https://opennetworking.org/) 
-projects like *SD-CORE*, *SD-RAN*, *Aether* and *ONOS*. All of its lifecycle operations are done 
+projects like *SD-Core*, *SD-RAN*, *Aether* and *ONOS*. All of its lifecycle operations are done 
 with Juju.
 
 Use it in your farm, mine or oil rig, wherever you need 5G connectivity.

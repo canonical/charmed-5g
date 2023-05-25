@@ -1,10 +1,12 @@
 Permalink
 
 Aether
+Grafana
 Juju
 Kubernetes
 lifecycle
 MicroK
 Multus
+Observability
 ONOS
 UPF
