@@ -35,4 +35,5 @@ Charmed 5G is a member of the Ubuntu family. It’s an open source project that 
 :hidden:
 
 how-to/index
+reference/index
 ```
