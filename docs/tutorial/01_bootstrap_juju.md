@@ -17,13 +17,6 @@ Enable the following addons:
 sudo microk8s enable dns rbac hostpath-storage
 ```
 
-Enable the multus addon:
-
-```console
-sudo microk8s addons repo add community https://github.com/canonical/microk8s-community-addons --reference feat/strict-fix-multus
-sudo microk8s enable multus
-```
-
 ## Install Juju
 
 From your terminal, install Juju.

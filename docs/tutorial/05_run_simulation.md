@@ -1,1 +1,1 @@
-# Deploy the 5G radio simulator
+# Run the 5G radio simulation

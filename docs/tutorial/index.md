@@ -30,4 +30,5 @@ problems, we want to help you, so please let us know.
 04_deploy_simulator
 05_run_simulation
 06_integrate_with_observability
+07_destroy_environment
 ```
