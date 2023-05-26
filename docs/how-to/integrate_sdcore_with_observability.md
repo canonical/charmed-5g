@@ -11,7 +11,7 @@ This guide explains how to Integrate the SD-Core with the Canonical Observabilit
 
 ## Deploy the `cos-lite` bundle
 
-Deploy the `cos-lite` model in a Juju model named `cos`:
+Deploy the `cos-lite` charm bundle in a Juju model named `cos`:
 
 ```bash
 juju add-model cos 
