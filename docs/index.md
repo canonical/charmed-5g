@@ -15,14 +15,28 @@ Use it in your farm, mine or oil rig, wherever you need 5G connectivity.
 ```{grid-item-card}
 :class-item: entry left
 
+[Tutorial](tutorial/index)
+^^^
+
+**Start here**: a hands-on introduction to Charmed 5G for new users
+```
+
+```{grid-item-card}
+:class-item: entry right
+
 [How-to guides](how-to/index)
 ^^^
 
 **Step-by-step guides** covering key operations and common tasks
 ```
 
+````
+
+
+````{grid} 1 1 2 2
+
 ```{grid-item-card}
-:class-item: entry right
+:class-item: entry left
 [Reference](reference/index)
 ^^^
 
@@ -42,6 +56,7 @@ Charmed 5G is a member of the Ubuntu family. It’s an open source project that 
 ```{toctree}
 :hidden:
 
+tutorial/index
 how-to/index
 reference/index
 ```
