@@ -1,5 +1,7 @@
 Permalink
 
+addon
+addons
 APIs
 Aether
 Grafana

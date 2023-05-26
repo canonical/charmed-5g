@@ -4,19 +4,19 @@ Now we will deploy the `sdcore` charm bundle that contains a complete 5G core ne
 
 ## Enable the Multus MicroK8s addon
 
-Add the community repo addon:
+Add the community repository addon:
 
 ```console
 sudo microk8s addons repo add community https://github.com/canonical/microk8s-community-addons --reference feat/strict-fix-multus
 ```
 
-Enable the multus addon:
+Enable the Multus addon:
 
 ```console
 sudo microk8s enable multus
 ```
 
-## Deploy the sdcore charm bundle
+## Deploy the `sdcore` charm bundle
 
 Create a Juju model named `core`:
 

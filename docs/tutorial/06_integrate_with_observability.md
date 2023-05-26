@@ -2,7 +2,7 @@
 
 We will integrate the 5G core network with the Canonical Observability Stack (COS).
 
-## Enable the metallb MicroK8s addon
+## Enable the `metallb` MicroK8s addon
 
 Enable the `metallb` addon with a range of 1 IP address:
 
@@ -12,7 +12,7 @@ sudo microk8s enable metallb 10.0.0.2-10.0.0.2
 
 ## Deploy the `cos-lite` bundle
 
-Create a new juju model named `cos`:
+Create a new Juju model named `cos`:
 
 ```console
 juju add-model cos
@@ -63,7 +63,7 @@ and the admin password provided in the last command.
 
 1. On the left pane, click on "Dashboard" -> "New" -> "New Dashboard".
 2. Click on "Add a new panel"
-3. Select prometheus as the data source
+3. Select Prometheus as the data source
 4. Create a new query with the following content:
    - Metric: `upf_packets_count`
    - Label filters: `iface=Core` and `dir=rx`
