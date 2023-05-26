@@ -21,6 +21,14 @@ Use it in your farm, mine or oil rig, wherever you need 5G connectivity.
 **Step-by-step guides** covering key operations and common tasks
 ```
 
+```{grid-item-card}
+:class-item: entry right
+[Reference](reference/index)
+^^^
+
+**Technical information** - specifications, APIs, architecture
+```
+
 ````
 
 ## Project and community
@@ -35,4 +43,5 @@ Charmed 5G is a member of the Ubuntu family. It’s an open source project that 
 :hidden:
 
 how-to/index
+reference/index
 ```
