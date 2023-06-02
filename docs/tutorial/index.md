@@ -26,9 +26,8 @@ problems, we want to help you, so please let us know.
 
 01_bootstrap_juju
 02_deploy_sdcore
-03_configure_network
-04_deploy_simulator
+03_integrate_sdcore_with_observability
+04_configure_sdcore
 05_run_simulation
-06_integrate_with_observability
-07_destroy_environment
+06_destroy_environment
 ```

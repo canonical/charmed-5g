@@ -1,4 +1,4 @@
-# Integrate with Observability
+# Integrate SD-Core with Observability
 
 We will integrate the 5G core network with the Canonical Observability Stack (COS).
 
@@ -53,6 +53,7 @@ juju integrate prometheus:receive-remote-write grafana-agent-k8s:send-remote-wri
 Retrieve the Grafana admin password:
 
 ```console
+juju switch cos
 juju run grafana/leader get-admin-password
 ```
 
@@ -62,18 +63,18 @@ and the admin password provided in the last command.
 ## Create a dashboard for observing 5G related metrics
 
 1. On the left pane, click on "Dashboard" -> "New" -> "New Dashboard".
-2. Click on "Add a new panel"
-3. Select Prometheus as the data source
-4. Create a new query with the following content:
-   - Metric: `upf_packets_count`
-   - Label filters: `iface=Core` and `dir=rx`
-5. Add a title to the panel: "UPF Received Packets from the core network"
-6. Click on "Save"
-7. Name the dashboard: "5G Core metrics"
+2. Create a panel for visualizing UPF upstream throughput:
+    1. Click on "Add a new panel"
+    2. Select Prometheus as the data source
+    3. Create a new query with the following content: `sum(8 * irate(upf_bytes_count{dir="tx",iface="Core"}[2m]))`
+    4. Add a title to the panel: "Upstream Bitrate"
+    5. Click on "Save"
+3. Create a second panel named "Downstream Bitrate" with the following query: `sum(8 * irate(upf_bytes_count{dir="tx",iface="Access"}[2m]))`.
+4. Name the dashboard: "UPF throughput"
 
-You now have a new dashboard for visualizing 5G metrics
+You now have a new dashboard for visualizing your 5G UPF throughput.
 
-```{image} ../images/grafana_dashboard.png
+```{image} ../images/grafana_upf_dashboard_before_sim.png
 :alt: Grafana dashboard
 :align: center
 ```
