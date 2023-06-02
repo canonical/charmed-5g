@@ -4,6 +4,7 @@ addon
 addons
 APIs
 Aether
+Bitrate
 Grafana
 Juju
 Kubernetes

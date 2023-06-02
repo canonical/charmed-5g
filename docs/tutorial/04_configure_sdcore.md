@@ -41,7 +41,7 @@ curl --location '10.1.19.189:5000/api/subscriber/imsi-208930100007487' \
 Create a new device group named "cows" that contains the newly created subscriber:
 
 ```console
-curl --location '10.1.19.166:5000/config/v1/device-group/cows' \
+curl --location '10.1.19.189:5000/config/v1/device-group/cows' \
 --header 'Content-Type: application/json' \
 --data '{
     "imsis": [
@@ -72,7 +72,7 @@ curl --location '10.1.19.166:5000/config/v1/device-group/cows' \
 Create a network slice called "default" that contains the "cows" device group:
 
 ```console
-curl --location '10.1.19.166:5000/config/v1/network-slice/default' \
+curl --location '10.1.19.189:5000/config/v1/network-slice/default' \
 --header 'Content-Type: application/json' \
 --data '{
   "slice-id": {

@@ -2,7 +2,7 @@
 
 ## Deploy the simulator
 
-Create a new juju model named `sim`:
+Create a new Juju model named `sim`:
 
 ```console
 juju add-model sim
