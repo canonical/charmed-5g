@@ -1,4 +1,4 @@
-# Destroy the environment
+# 6. Destroy the environment
 
 Destroy the Juju controller and all its models
 

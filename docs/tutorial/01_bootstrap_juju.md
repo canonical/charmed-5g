@@ -1,4 +1,4 @@
-# Bootstrap a Juju controller
+# 1. Bootstrap a Juju controller
 
 We will get started by installing MicroK8s on your machine and bootstrapping a Juju controller on 
 this MicroK8s instance. 

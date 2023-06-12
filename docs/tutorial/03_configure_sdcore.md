@@ -1,4 +1,4 @@
-# Configure SD-Core
+# 4. Configure SD-Core
 
 Configuring the 5G core network is done making HTTP requests to the `webui` service. Here we will 
 create a subscriber, a device group and a network slice.
@@ -27,7 +27,7 @@ the next commands.
 Create a new subscriber:
 
 ```console
-curl --location '10.1.19.189:5000/api/subscriber/imsi-208930100007487' \
+curl -v --location '10.1.19.189:5000/api/subscriber/imsi-208930100007487' \
 --header 'Content-Type: text/plain' \
 --data '{
     "UeId":"208930100007487",
@@ -41,7 +41,7 @@ curl --location '10.1.19.189:5000/api/subscriber/imsi-208930100007487' \
 Create a new device group named "cows" that contains the newly created subscriber:
 
 ```console
-curl --location '10.1.19.189:5000/config/v1/device-group/cows' \
+curl -v --location '10.1.19.189:5000/config/v1/device-group/cows' \
 --header 'Content-Type: application/json' \
 --data '{
     "imsis": [
@@ -55,7 +55,7 @@ curl --location '10.1.19.189:5000/config/v1/device-group/cows' \
         "dns-primary": "8.8.8.8",
         "mtu": 1460,
         "ue-dnn-qos": {
-            "dnn-mbr-uplink": 200000000,
+            "dnn-mbr-uplink": 20000000,
             "dnn-mbr-downlink": 200000000,
             "traffic-class": {
                 "name": "platinum",
@@ -72,7 +72,7 @@ curl --location '10.1.19.189:5000/config/v1/device-group/cows' \
 Create a network slice called "default" that contains the "cows" device group:
 
 ```console
-curl --location '10.1.19.189:5000/config/v1/network-slice/default' \
+curl -v --location '10.1.19.189:5000/config/v1/network-slice/default' \
 --header 'Content-Type: application/json' \
 --data '{
   "slice-id": {

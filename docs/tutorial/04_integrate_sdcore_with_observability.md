@@ -1,4 +1,4 @@
-# Integrate SD-Core with Observability
+# 5. Integrate SD-Core with Observability
 
 We will integrate the 5G core network with the Canonical Observability Stack (COS).
 
@@ -68,13 +68,14 @@ and the admin password provided in the last command.
     2. Select Prometheus as the data source
     3. Create a new query with the following content: `sum(8 * irate(upf_bytes_count{dir="tx",iface="Core"}[2m]))`
     4. Add a title to the panel: "Upstream Bitrate"
-    5. Click on "Save"
+    5. Click on "Apply"
 3. Create a second panel named "Downstream Bitrate" with the following query: `sum(8 * irate(upf_bytes_count{dir="tx",iface="Access"}[2m]))`.
-4. Name the dashboard: "UPF throughput"
+4. Name the dashboard: "UPF Throughput"
+5. Click on "Save Dashboard"
 
 You now have a new dashboard for visualizing your 5G UPF throughput.
 
-```{image} ../images/grafana_upf_dashboard_before_sim.png
+```{image} ../images/grafana_upf_dashboard_sim_before.png
 :alt: Grafana dashboard
 :align: center
 ```
