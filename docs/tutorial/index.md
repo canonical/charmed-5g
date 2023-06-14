@@ -19,7 +19,7 @@ product.
 To complete this tutorial, you will need a machine with the following
 requirements:
 
-- A recent `x86_64` CPU with the `AVX-512` feature.
+- A recent `x86_64` CPU (Intel 4th generation or newer, or AMD Ryzen or newer)
 - 8GB of RAM
 - 50GB of free disk space
 
