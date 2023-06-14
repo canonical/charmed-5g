@@ -21,7 +21,7 @@ requirements:
 
 - A recent `x86_64` CPU with the `AVX-512` feature.
 - 8GB of RAM
-- 50Gb of free disk space
+- 50GB of free disk space
 
 The tutorial has been tested with a variety of users. We make every effort to
 keep it up-to-date and ensure that it’s reliable - but if you encounter any
