@@ -1,6 +1,6 @@
 # Tutorial
 
-In this tutorial, we will deploy and run the SD-Core 5G core network using Juju. We will also 
+In this tutorial, we will deploy and run the SD-Core 5G core network using Juju. We will also
 deploy a radio and cellphone simulator to simulate usage of this network.
 
 Charmed 5G is a complex piece of software.
@@ -15,6 +15,13 @@ tutorial. It’s a strongly-recommended investment of time if you’re new to
 Charmed 5G - it will save you many more hours later on. Follow the
 tutorial steps in sequence; they take you on a learning journey through the
 product.
+
+To complete this tutorial, you will need a machine with the following
+requirements:
+
+- A recent `x86_64` CPU (Intel 4ᵗʰ generation or newer, or AMD Ryzen or newer)
+- 8GB of RAM
+- 50GB of free disk space
 
 The tutorial has been tested with a variety of users. We make every effort to
 keep it up-to-date and ensure that it’s reliable - but if you encounter any
