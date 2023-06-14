@@ -20,7 +20,7 @@ To complete this tutorial, you will need a machine with the following
 requirements:
 
 - A recent `x86_64` CPU with the `AVX-512` feature.
-- 8Gb of RAM
+- 8GB of RAM
 - 50Gb of free disk space
 
 The tutorial has been tested with a variety of users. We make every effort to
