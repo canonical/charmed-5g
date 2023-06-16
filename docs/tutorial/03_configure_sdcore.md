@@ -21,13 +21,19 @@ webui/0*              active    idle   10.1.19.189
 
 ```{note}
 Here the address is `10.1.19.189`, yours will likely be different. Make sure to replace it in
-the next commands.
+the next command.
+```
+
+Export your `webui` IP address to a variable:
+
+```console
+export WEBUI_IP="10.1.19.189"
 ```
 
 Create a new subscriber:
 
 ```console
-curl -v --location '10.1.19.189:5000/api/subscriber/imsi-208930100007487' \
+curl -v ${WEBUI_IP}:5000/api/subscriber/imsi-208930100007487 \
 --header 'Content-Type: text/plain' \
 --data '{
     "UeId":"208930100007487",
@@ -41,7 +47,7 @@ curl -v --location '10.1.19.189:5000/api/subscriber/imsi-208930100007487' \
 Create a new device group named "cows" that contains the newly created subscriber:
 
 ```console
-curl -v --location '10.1.19.189:5000/config/v1/device-group/cows' \
+curl -v ${WEBUI_IP}:5000/config/v1/device-group/cows \
 --header 'Content-Type: application/json' \
 --data '{
     "imsis": [
@@ -72,7 +78,7 @@ curl -v --location '10.1.19.189:5000/config/v1/device-group/cows' \
 Create a network slice called "default" that contains the "cows" device group:
 
 ```console
-curl -v --location '10.1.19.189:5000/config/v1/network-slice/default' \
+curl -v ${WEBUI_IP}:5000/config/v1/network-slice/default \
 --header 'Content-Type: application/json' \
 --data '{
   "slice-id": {
