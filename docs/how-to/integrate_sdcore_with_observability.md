@@ -18,6 +18,24 @@ juju add-model cos
 juju deploy cos-lite --trust
 ```
 
+## Deploy the `cos-configuration-k8s` charm
+
+Deploy the `cos-configuration-k8s` charm with the following SD-Core COS configuration:
+
+```console
+juju deploy cos-configuration-k8s \
+  --config git_repo=https://github.com/canonical/sdcore-cos-configuration \
+  --config git_branch=main \
+  --config git_depth=1 \
+  --config grafana_dashboards_path=grafana_dashboards/sdcore/
+```
+
+Integrate it with Grafana:
+
+```console
+juju integrate cos-configuration-k8s grafana
+```
+
 ## Integrate Grafana Agent with Prometheus
 
 We will create a cross model integration between Grafana Agent (in the SD-Core model) and Prometheus (in the `cos` model).
@@ -43,8 +61,7 @@ juju integrate prometheus:receive-remote-write grafana-agent-k8s:send-remote-wri
 
 You can now see metrics coming from SD-Core in your Grafana dashboard.
 
-```{image} ../images/grafana_upf.png
-:alt: Grafana UPF Metrics
-:width: 700px
+```{image} ../images/grafana_5g_dashboard_sim_after.png
+:alt: Grafana dashboard
 :align: center
 ```
