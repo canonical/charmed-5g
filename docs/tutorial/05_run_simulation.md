@@ -41,8 +41,8 @@ success: "true"
 
 ## Monitor the network
 
-Now go back to your Prometheus dashboard, you should see that there was a spike in usage right
-when you ran the simulation:
+Now go back to the "5G Network Overview" Grafana dashboard, you should see that there was a spike 
+in usage right when you ran the simulation:
 
 ```{image} ../images/grafana_5g_dashboard_sim_after.png
 :alt: Grafana dashboard
