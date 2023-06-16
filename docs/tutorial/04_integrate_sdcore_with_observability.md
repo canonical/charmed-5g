@@ -29,7 +29,7 @@ charms are in the `Active/Idle` state.
 
 ## Deploy the `cos-configuration-k8s` charm
 
-Deploy the `cos-configuration-k8s` charm with the `sdcore` config:
+Deploy the `cos-configuration-k8s` charm with the following SD-Core COS configuration:
 
 ```console
 juju deploy cos-configuration-k8s \
