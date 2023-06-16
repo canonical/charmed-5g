@@ -27,6 +27,24 @@ juju deploy cos-lite --trust
 You can validate the status of the deployment by running `juju status`. COS is ready when all the 
 charms are in the `Active/Idle` state.
 
+## Deploy the `cos-configuration-k8s` charm
+
+Deploy the `cos-configuration-k8s` charm with the following SD-Core COS configuration:
+
+```console
+juju deploy cos-configuration-k8s \
+  --config git_repo=https://github.com/canonical/sdcore-cos-configuration \
+  --config git_branch=main \
+  --config git_depth=1 \
+  --config grafana_dashboards_path=grafana_dashboards/sdcore/
+```
+
+Relate it to Grafana:
+
+```console
+juju relate cos-configuration-k8s grafana
+```
+
 ## Integrate Grafana Agent with Prometheus
 
 First, offer the `receive-remote-write` relation from Prometheus for use in other models:
@@ -58,24 +76,13 @@ juju run grafana/leader get-admin-password
 ```
 
 In your browser, navigate to `https://10.0.0.2/cos-grafana`. Login using the "admin" username
-and the admin password provided in the last command. 
+and the admin password provided in the last command. Click on "Dashboards" -> "Browse" and select 
+"5G Network Overview".
 
-## Create a dashboard for observing 5G related metrics
+This dashboard presents an overview of your 5G Network status. Keep this page open, we will
+revisit it shortly.
 
-1. On the left pane, click on "Dashboard" -> "New" -> "New Dashboard".
-2. Create a panel for visualizing UPF upstream throughput:
-    1. Click on "Add a new panel"
-    2. Select Prometheus as the data source
-    3. Create a new query with the following content: `sum(8 * irate(upf_bytes_count{dir="tx",iface="Core"}[2m]))`
-    4. Add a title to the panel: "Upstream Bitrate"
-    5. Click on "Apply"
-3. Create a second panel named "Downstream Bitrate" with the following query: `sum(8 * irate(upf_bytes_count{dir="tx",iface="Access"}[2m]))`.
-4. Name the dashboard: "UPF Throughput"
-5. Click on "Save Dashboard"
-
-You now have a new dashboard for visualizing your 5G UPF throughput.
-
-```{image} ../images/grafana_upf_dashboard_sim_before.png
+```{image} ../images/grafana_5g_dashboard_sim_before.png
 :alt: Grafana dashboard
 :align: center
 ```

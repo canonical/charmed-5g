@@ -14,6 +14,12 @@ Deploy the `sdcore-gnbsim` operator
 juju deploy sdcore-gnbsim gnbsim --trust --channel=edge
 ```
 
+Integrate it to the AMF:
+
+```console
+juju integrate gnbsim:fiveg-n2 amf:fiveg-n2
+```
+
 ## Run the simulation
 
 ```console
@@ -35,10 +41,10 @@ success: "true"
 
 ## Monitor the network
 
-Now go back to your Prometheus dashboard, you should see that there was a spike in usage right
-when you ran the simulation:
+Now go back to the "5G Network Overview" Grafana dashboard, you should see that there was a spike 
+in usage right when you ran the simulation:
 
-```{image} ../images/grafana_upf_dashboard_sim_after.png
+```{image} ../images/grafana_5g_dashboard_sim_after.png
 :alt: Grafana dashboard
 :align: center
 ```
