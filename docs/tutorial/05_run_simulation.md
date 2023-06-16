@@ -14,10 +14,10 @@ Deploy the `sdcore-gnbsim` operator
 juju deploy sdcore-gnbsim gnbsim --trust --channel=edge
 ```
 
-Relate it to the AMF:
+Integrate it to the AMF:
 
 ```console
-juju relate gnbsim amf
+juju integrate gnbsim:fiveg-n2 amf:fiveg-n2
 ```
 
 ## Run the simulation
