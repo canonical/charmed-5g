@@ -7,7 +7,8 @@
 ````{tab-item} Single site deployment
 
 Use the `sdcore` bundle to deploy a standalone 5G core network.
-This bundle contains the 5G control plane functions, the UPF, Webui, Grafana Agent and MongoDB.
+This bundle contains the 5G control plane functions, the UPF, Webui, Grafana Agent, Self Signed 
+Certificates and MongoDB.
 
 ```{image} ../images/sdcore_single_site.png
 :alt: Single site deployment
