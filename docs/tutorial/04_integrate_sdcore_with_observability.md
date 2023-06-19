@@ -42,7 +42,7 @@ juju deploy cos-configuration-k8s \
 Relate it to Grafana:
 
 ```console
-juju relate cos-configuration-k8s grafana
+juju integrate cos-configuration-k8s grafana
 ```
 
 ## Integrate Grafana Agent with Prometheus
