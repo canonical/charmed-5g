@@ -39,10 +39,10 @@ juju deploy cos-configuration-k8s \
   --config grafana_dashboards_path=grafana_dashboards/sdcore/
 ```
 
-Relate it to Grafana:
+Integrate it to Grafana:
 
 ```console
-juju relate cos-configuration-k8s grafana
+juju integrate cos-configuration-k8s grafana
 ```
 
 ## Integrate Grafana Agent with Prometheus
