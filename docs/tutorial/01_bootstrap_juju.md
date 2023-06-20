@@ -14,7 +14,9 @@ sudo snap install microk8s --channel=1.27-strict/stable
 Enable the following addons:
 
 ```console
-sudo microk8s enable dns rbac hostpath-storage
+sudo microk8s enable dns
+sudo microk8s enable rbac
+sudo microk8s enable hostpath-storage
 ```
 
 ## Install Juju
@@ -29,4 +31,11 @@ Bootstrap a Juju controller
 
 ```console
 juju bootstrap microk8s
+```
+
+```{note}
+There is a [bug](https://bugs.launchpad.net/juju/+bug/1988355) in Juju that occurs when 
+bootstrapping a controller on a new machine. If you encounter it, create the following 
+directory:
+`mkdir -p /home/ubuntu/.local/share`
 ```
