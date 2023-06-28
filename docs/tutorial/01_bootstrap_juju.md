@@ -11,11 +11,9 @@ From your terminal, install MicroK8s:
 sudo snap install microk8s --channel=1.27-strict/stable
 ```
 
-Enable the following addons:
+Enable the `hostpath-storage` MicroK8s addon:
 
 ```console
-sudo microk8s enable dns
-sudo microk8s enable rbac
 sudo microk8s enable hostpath-storage
 ```
 
