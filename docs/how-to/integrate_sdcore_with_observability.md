@@ -47,7 +47,7 @@ juju offer cos.prometheus:receive-remote-write
 juju offer cos.loki:logging
 ```
 
-Then, consume the relation from the SD-Core model:
+Then, consume the integrations from the SD-Core model:
 
 ```bash
 juju switch <SD-Core model>
