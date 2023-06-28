@@ -16,7 +16,7 @@ Here are multiple reasons to operate SD-Core using Juju.
 
 ## Security
 
-- **HTTPS by default**: All communications on SBI interfaces between the 5G network functions are encrypted.
+- **HTTPS by default**: All communications on SBI interfaces are encrypted.
 - **Lean container images**: Container images are much smaller than the upstream Docker images which makes for a smaller attack surface. Look at the [AMF container image](https://github.com/canonical/sdcore-amf-rock) for example which is 38% smaller. This is achieved using [Rockcraft](https://canonical-rockcraft.readthedocs-hosted.com/en/latest/). 
 
 ## Observability
