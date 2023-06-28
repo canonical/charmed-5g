@@ -1,0 +1,30 @@
+# Why Juju?
+
+Here are multiple reasons to operate SD-Core using Juju.
+
+## Model driven Operations
+
+### Day 1 operations
+
+- **Deploying**: SD-Core can be deployed on any cloud or on your laptop, all you need is a Kubernetes.
+- **Integrating**: Integrations between the 5G network functions, MongoDB, Observability, TLS certificates providers are all modeled using Juju integrations. Users don't need to care about passing around TLS certificates, database passwords, URL's and such integration information, those are all handled securely by Juju.
+
+### Day 2 operations
+
+- **Upgrading**: [TO DO]
+- **Scaling**: The MongoDB database can easily scale up and down to accommodate varying subscriber numbers and availability requirements.
+- **Migrating**: [TO DO]
+- **Managing certificates**: [TO DO]
+
+## Security
+
+- **HTTPS by default**: All communications on SBI interfaces are encrypted.
+- **Lean container images**: Container images are much smaller than the upstream Docker images which makes for a smaller attack surface. Look at the [AMF container image](https://github.com/canonical/sdcore-amf-rock) for example which is 38% smaller. This is achieved using [Rockcraft](https://canonical-rockcraft.readthedocs-hosted.com/en/latest/). 
+
+## Observability
+
+- **Metrics**: The AMF, SMF and UPF network functions expose metrics about status, subscriber connectivity and more.
+- **Dashboards**: Useful dashboards about UPF throughput and subscriber connectivity provide visual representations of metrics. 
+- **Logging**: MongoDB logs are available for troubleshooting and auditing.
+
+To leverage those, [integrate SD-Core with the Observability stack](../how-to/integrate_sdcore_with_observability). 
