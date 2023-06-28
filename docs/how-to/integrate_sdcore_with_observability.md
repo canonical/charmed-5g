@@ -40,26 +40,29 @@ juju integrate cos-configuration-k8s grafana
 
 We will create a cross model integration between Grafana Agent (in the SD-Core model) and Prometheus (in the `cos` model).
 
-First, offer the `receive-remote-write` relation from Prometheus for use in other models:
+First, offer the following integrations from Prometheus and Loki for use in other models:
 
 ```bash
 juju offer cos.prometheus:receive-remote-write
+juju offer cos.loki:logging
 ```
 
-Then, consume the relation from the SD-Core model:
+Then, consume the integrations from the SD-Core model:
 
 ```bash
 juju switch <SD-Core model>
 juju consume cos.prometheus
+juju consume cos.loki
 ```
 
-Integrate `grafana-agent-k8s` with `prometheus`:
+Integrate `grafana-agent-k8s` with `prometheus` and `loki`:
 
 ```bash
 juju integrate prometheus:receive-remote-write grafana-agent-k8s:send-remote-write
+juju integrate loki:logging grafana-agent-k8s:logging-consumer
 ```
 
-You can now see metrics coming from SD-Core in your Grafana dashboard.
+You can now see metrics and logs coming from SD-Core in your Grafana dashboard.
 
 ```{image} ../images/grafana_5g_dashboard_sim_after.png
 :alt: Grafana dashboard

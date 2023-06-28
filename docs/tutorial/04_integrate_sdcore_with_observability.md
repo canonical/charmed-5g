@@ -47,23 +47,26 @@ juju integrate cos-configuration-k8s grafana
 
 ## Integrate Grafana Agent with Prometheus
 
-First, offer the `receive-remote-write` relation from Prometheus for use in other models:
+First, offer the following integrations from Prometheus and Loki for use in other models:
 
 ```console
 juju offer cos.prometheus:receive-remote-write
+juju offer cos.loki:logging
 ```
 
-Then, consume the relation from the `core` model:
+Then, consume the integrations from the `core` model:
 
 ```console
 juju switch core
 juju consume cos.prometheus
+juju consume cos.loki
 ```
 
-Integrate `grafana-agent-k8s` (in the `core` model) with `prometheus` (in the `cos` model):
+Integrate `grafana-agent-k8s` (in the `core` model) with `prometheus` and `loki` (in the `cos` model):
 
 ```console
 juju integrate prometheus:receive-remote-write grafana-agent-k8s:send-remote-write
+juju integrate loki:logging grafana-agent-k8s:logging-consumer
 ```
 
 ## Login to Grafana
