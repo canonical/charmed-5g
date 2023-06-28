@@ -54,7 +54,7 @@ juju offer cos.prometheus:receive-remote-write
 juju offer cos.loki:logging
 ```
 
-Then, consume the integration from the `core` model:
+Then, consume the integrations from the `core` model:
 
 ```console
 juju switch core
