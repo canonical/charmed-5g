@@ -13,6 +13,8 @@ Here are multiple reasons to operate SD-Core using Juju.
 
 - **Upgrading**: [TO DO]
 - **Scaling**: The MongoDB database can easily scale up and down to accommodate varying subscriber numbers and availability requirements.
+- **Migrating**: [TO DO]
+- **Managing certificates**: [TO DO]
 
 ## Security
 
