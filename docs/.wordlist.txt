@@ -7,6 +7,7 @@ APIs
 Aether
 Bitrate
 Grafana
+HTTPS
 integrations
 Juju
 Kubernetes
@@ -16,6 +17,10 @@ Multus
 Observability
 ONOS
 ONF's
+Rockcraft
+SBI
+SMF
+TLS
 UPF
 unsecure
 Webui

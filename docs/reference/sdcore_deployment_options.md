@@ -1,5 +1,4 @@
-
-## SD-Core deployment options
+# SD-Core deployment options
 
 `````{tab-set}
     
