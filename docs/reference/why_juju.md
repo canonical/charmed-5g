@@ -7,7 +7,7 @@ Here are multiple reasons to operate SD-Core using Juju.
 ### Day 1 operations
 
 - **Deploying**: SD-Core can be deployed on any cloud or on your laptop, all you need is a Kubernetes.
-- **Integrating**: Integrations between the 5G network functions, MongoDB, Observability, TLS certificates providers are all modeled using Juju integrations. Users don't need to care about passing around TLS certificates, database passwords, URL's and such integration information.
+- **Integrating**: Integrations between the 5G network functions, MongoDB, Observability, TLS certificates providers are all modeled using Juju integrations. Users don't need to care about passing around TLS certificates, database passwords, URL's and such integration information, those are all handled securely by Juju.
 
 ### Day 2 operations
 
