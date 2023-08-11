@@ -50,7 +50,7 @@ sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==1.0.4
 sphinxcontrib-serializinghtml==1.1.6
 sphinxext-opengraph==0.8.2
-tornado==6.3.2
+tornado==6.3.3
 urllib3==2.0.4
 wcmatch==8.4.1
 webencodings==0.5.1
