@@ -11,6 +11,13 @@ From your terminal, install MicroK8s:
 sudo snap install microk8s --channel=1.27-strict/stable
 ```
 
+Add your user to the `snap_microk8s` group:
+
+```console
+sudo usermod -a -G snap_microk8s $USER
+newgrp snap_microk8s
+```
+
 Enable the `hostpath-storage` MicroK8s addon:
 
 ```console
@@ -23,13 +30,6 @@ From your terminal, install Juju.
 
 ```console
 sudo snap install juju --channel=3.1/stable
-```
-
-Add your user to the `snap_microk8s` group:
-
-```console
-sudo usermod -a -G snap_microk8s $USER
-newgrp snap_microk8s
 ```
 
 Bootstrap a Juju controller
