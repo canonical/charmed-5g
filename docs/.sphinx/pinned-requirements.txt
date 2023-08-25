@@ -18,7 +18,7 @@ importlib-resources==6.0.1
 Jinja2==3.1.2
 kiwisolver==1.4.5
 livereload==2.6.3
-lxd-sphinx-extensions==0.0.10
+lxd-sphinx-extensions==0.0.11
 lxml==4.9.3
 Markdown==3.4.4
 MarkupSafe==2.1.3
