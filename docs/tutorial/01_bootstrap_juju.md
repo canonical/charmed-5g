@@ -20,7 +20,7 @@ use the following workaround:
 1. Note the Calico MTU:
 `ip addr s vxlan.calico`
 
-2. Patch Kubenetes to use that:
+2. Patch Kubernetes to use that:
 `microk8s kubectl patch -n kube-system cm calico-config --patch '{"data": {"veth_mtu": "1372"}}'`
 
 3. Reboot
