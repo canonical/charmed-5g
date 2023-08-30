@@ -52,6 +52,6 @@ sphinxcontrib-serializinghtml==1.1.9
 sphinxext-opengraph==0.8.2
 tornado==6.3.3
 urllib3==2.0.4
-wcmatch==8.4.1
+wcmatch==8.5
 webencodings==0.5.1
 zipp==3.16.2
