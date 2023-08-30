@@ -11,6 +11,16 @@ From your terminal, install MicroK8s:
 sudo snap install microk8s --channel=1.27-strict/stable
 ```
 
+```{note}
+There is a [bug](https://github.com/canonical/microk8s/issues/4142) in some versions of
+Microk8s that occurs if the system MTU is not the default of 1500.  This will result
+in communication errors when deploying the charms.  If your MTU is not 1500, you can
+use the following commands as a workaround:
+
+`sudo mkdir -p /var/lib/calico`
+`sudo ln -sf /var/snap/microk8s/current/var/lib/calico/mtu /var/lib/calico/mtu`
+```
+
 Add your user to the `snap_microk8s` group:
 
 ```console
@@ -42,5 +52,5 @@ juju bootstrap microk8s
 There is a [bug](https://bugs.launchpad.net/juju/+bug/1988355) in Juju that occurs when 
 bootstrapping a controller on a new machine. If you encounter it, create the following 
 directory:
-`mkdir -p /home/ubuntu/.local/share`
+`mkdir -p $HOME/.local/share`
 ```
