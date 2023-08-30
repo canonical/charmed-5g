@@ -15,10 +15,16 @@ sudo snap install microk8s --channel=1.27-strict/stable
 There is a [bug](https://github.com/canonical/microk8s/issues/4142) in some versions of
 Microk8s that occurs if the system MTU is not the default of 1500.  This will result
 in communication errors when deploying the charms.  If your MTU is not 1500, you can
-use the following commands as a workaround:
+use the following workaround:
 
-`sudo mkdir -p /var/lib/calico`
-`sudo ln -sf /var/snap/microk8s/current/var/lib/calico/mtu /var/lib/calico/mtu`
+1. Note the Calico MTU:
+`ip addr s vxlan.calico`
+
+2. Patch Kubenetes to use that:
+`microk8s kubectl patch -n kube-system cm calico-config --patch '{"data": {"veth_mtu": "1372"}}'`
+
+3. Reboot
+`sudo init 6`
 ```
 
 Add your user to the `snap_microk8s` group:

@@ -12,6 +12,8 @@ Juju
 Kubernetes
 lifecycle
 MicroK
+microk8s
+MTU
 Multus
 Observability
 ONOS
