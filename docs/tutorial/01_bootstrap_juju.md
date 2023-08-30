@@ -13,7 +13,7 @@ sudo snap install microk8s --channel=1.27-strict/stable
 
 ```{note}
 There is a [bug](https://github.com/canonical/microk8s/issues/4142) in some versions of
-Microk8s that occurs if the system MTU is not the default of 1500.  This will result
+MicroK8s that occurs if the system MTU is not the default of 1500.  This will result
 in communication errors when deploying the charms.  If your MTU is not 1500, you can
 use the following workaround:
 
