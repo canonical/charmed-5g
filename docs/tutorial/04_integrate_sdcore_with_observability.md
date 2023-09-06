@@ -1,4 +1,4 @@
-# 5. Integrate SD-Core with Observability
+# 4. Integrate SD-Core with Observability
 
 We will integrate the 5G core network with the Canonical Observability Stack (COS).
 

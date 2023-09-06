@@ -1,4 +1,4 @@
-# 6. Run the 5G simulation
+# 5. Run the 5G simulation
 
 ## Deploy the simulator
 
