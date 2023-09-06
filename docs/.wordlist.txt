@@ -6,6 +6,7 @@ AMF
 APIs
 Aether
 Bitrate
+Charmhub
 Grafana
 integrations
 Juju
