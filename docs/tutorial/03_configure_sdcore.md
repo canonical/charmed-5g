@@ -1,4 +1,4 @@
-# 4. Configure SD-Core
+# 3. Configure SD-Core
 
 Configuring the 5G core network is done making HTTP requests to the `webui` service. Here we will 
 create a subscriber, a device group and a network slice.

@@ -1,32 +1,61 @@
 # Deploy SD-Core
 
-This guide explains how to deploy the SD-Core charm bundle.
+`````{tab-set}
 
-## Requirements
+````{tab-item} SD-Core
 
+### Requirements
 - Juju >= 3.1
 - Kubernetes >= 1.25
 - Multus
 
-## Deploy SD-Core
-
-Enable Multus on MicroK8s
-
-```bash
-sudo microk8s addons repo add community https://github.com/canonical/microk8s-community-addons --reference feat/strict-fix-multus
-sudo microk8s enable multus
-```
-
-Create a Juju model:
-
-```bash
-juju add-model sdcore
-```
-
-Deploy the `sdcore` charm bundle:
+### Deploy
 
 ```bash
 juju deploy sdcore --trust --channel=edge
 ```
 
-The 5G core is ready when all the charms are in the `Active/Idle` state.
+### Configure
+
+To view all configuration options, please visit the bundle's [Charmhub page](https://charmhub.io/sdcore/).
+
+````
+
+````{tab-item} SD-Core Control Plane
+
+### Requirements
+- Juju >= 3.1
+- Kubernetes >= 1.25
+
+### Deploy
+
+```bash
+juju deploy sdcore-control-plane --trust --channel=edge
+```
+
+### Configure
+
+To view all configuration options, please visit the bundle's [Charmhub page](https://charmhub.io/sdcore-control-plane/).
+
+````
+
+````{tab-item} SD-Core User Plane
+
+### Requirements
+- Juju >= 3.1
+- Kubernetes >= 1.25
+- Multus
+
+### Deploy
+
+```bash
+juju deploy sdcore-user-plane --trust --channel=edge
+```
+
+### Configure
+
+To view all configuration options, please visit the bundle's [Charmhub page](https://charmhub.io/sdcore-user-plane/).
+
+````
+
+`````

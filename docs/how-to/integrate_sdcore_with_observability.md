@@ -1,12 +1,7 @@
-# Integrate SD-Core with Observability
-
-This guide explains how to Integrate the SD-Core with the Canonical Observability Stack (COS).
+# Integrate SD-Core with Canonical Observability Stack
 
 ## Requirements
 
-- Juju >= 3.1
-- Kubernetes >= 1.25
-- Multus
 - One of the `sdcore` bundles deployed in a Juju model
 
 ## Deploy the `cos-lite` bundle
