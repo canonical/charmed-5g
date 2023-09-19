@@ -101,7 +101,7 @@ curl -v ${WEBUI_IP}:5000/config/v1/network-slice/default \
       }
     ],
     "upf": {
-      "upf-name": "upf",
+      "upf-name": "upf-external",
       "upf-port": "8805"
     }
   }
