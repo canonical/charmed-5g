@@ -7,7 +7,7 @@ We will integrate the 5G core network with the Canonical Observability Stack (CO
 Enable the `metallb` addon with a range of several addresses:
 
 ```console
-sudo microk8s enable metallb 10.0.0.2-10.0.0.10
+sudo microk8s enable metallb 10.0.0.2-10.0.0.4
 ```
 
 ## Deploy the `cos-lite` bundle
