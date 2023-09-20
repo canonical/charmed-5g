@@ -4,10 +4,10 @@ We will integrate the 5G core network with the Canonical Observability Stack (CO
 
 ## Enable the `metallb` MicroK8s addon
 
-Enable the `metallb` addon with a range of 1 IP address:
+Enable the `metallb` addon with a range of several addresses:
 
 ```console
-sudo microk8s enable metallb 10.0.0.2-10.0.0.2
+sudo microk8s enable metallb 10.0.0.2-10.0.0.4
 ```
 
 ## Deploy the `cos-lite` bundle
@@ -24,7 +24,7 @@ Deploy the `cos-lite` charm bundle:
 juju deploy cos-lite --trust
 ```
 
-You can validate the status of the deployment by running `juju status`. COS is ready when all the 
+You can validate the status of the deployment by running `juju status`. COS is ready when all the
 charms are in the `Active/Idle` state.
 
 ## Deploy the `cos-configuration-k8s` charm
@@ -78,8 +78,28 @@ juju switch cos
 juju run grafana/leader get-admin-password
 ```
 
-In your browser, navigate to `https://10.0.0.2/cos-grafana`. Login using the "admin" username
-and the admin password provided in the last command. Click on "Dashboards" -> "Browse" and select 
+Next, find the IP address of your instance of Traefik, where we will be able to access Grafana, by
+inspecting the output of `juju status traefik`. The address will appear under the *App* section, and
+it should be in the range we provided to MetalLB. In this case it is `10.0.0.4`
+
+```console
+$ juju status traefik
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+cos    microk8s-localhost  microk8s/localhost  3.1.5    unsupported  15:34:30-03:00
+
+App      Version  Status  Scale  Charm        Channel  Rev  Address   Exposed  Message
+traefik  2.9.6    active      1  traefik-k8s  stable   129  10.0.0.4  no
+
+Unit        Workload  Agent  Address       Ports  Message
+traefik/0*  active    idle   10.1.103.186
+
+Offer       Application  Charm           Rev  Connected  Endpoint              Interface                Role
+loki        loki         loki-k8s        91   1/1        logging               loki_push_api            provider
+prometheus  prometheus   prometheus-k8s  129  1/1        receive-remote-write  prometheus_remote_write  provider
+```
+
+In your browser, navigate to `https://<traefik-address>/cos-grafana`. Login using the "admin" username
+and the admin password provided in the last command. Click on "Dashboards" -> "Browse" and select
 "5G Network Overview".
 
 This dashboard presents an overview of your 5G Network status. Keep this page open, we will

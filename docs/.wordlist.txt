@@ -12,11 +12,13 @@ integrations
 Juju
 Kubernetes
 lifecycle
+MetalLB
 MicroK
 Multus
 Observability
 ONOS
 ONF's
+Traefik
 UPF
 unsecure
 Webui
