@@ -9,6 +9,7 @@ Aether
 Bitrate
 Charmhub
 CharmHub
+CSR
 Gnbsim
 Grafana
 integrations
@@ -22,10 +23,13 @@ Multus
 NRF
 NSSF
 Observability
+OCI
 ONOS
 ONF's
 PCF
+Rockcraft
 SMF
+TLS
 Traefik
 UDM
 UDR
