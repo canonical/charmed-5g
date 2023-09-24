@@ -17,7 +17,7 @@ omecproject/5gc-smf                 master-latest   d4b790e2c492   4 months ago 
 
 The charmed 5G image of the SMF is less than half the size of the upstream image. This level of size reduction is typical for all Charmed 5G images with the total size of the SD-Core workload being around 1GB in total instead of 2GB in the upstream project.
 
-In addition to being small, the images built on a weekly schedule. This means that the images are always up-to-date with the latest security patches and bug fixes.
+In addition to being small, the images are built on a weekly schedule. This means that the images are always up-to-date with the latest security patches and bug fixes.
 
 ## TLS everywhere
 
