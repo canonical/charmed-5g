@@ -45,6 +45,15 @@ Charmed 5G is for private mobile networks operators and all connectivity enthusi
 **Technical information** - specifications, APIs, architecture
 ```
 
+```{grid-item-card}
+:class-item: entry right
+
+[Explanation](explanation/index)
+^^^
+
+**Discussion and clarification** of key topics
+```
+
 ````
 
 ## Project and community
@@ -61,4 +70,5 @@ Charmed 5G is a member of the Ubuntu family. It’s an open source project that 
 tutorial/index
 how-to/index
 reference/index
+explanation/index
 ```
