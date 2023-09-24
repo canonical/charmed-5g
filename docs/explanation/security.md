@@ -21,8 +21,8 @@ In addition to being small, the images are built on a weekly schedule. This mean
 
 ## TLS everywhere
 
-Charmed 5G uses TLS everywhere. This means that all communication between 5G network functions is encrypted. This is done by default using the `tls-certificates` charm relation interface and is not optional.
+Charmed 5G enforces TLS encryption across all communication within the 5G network functions.
 
-Each Charmed 5G charm generates its own private key and a certificate signing request (CSR). The CSR is then sent to the TLS certificate provider, which signs the certificate and returns it to the charm. The 5G network function then uses the certificate to encrypt all communication with other network functions.
+Each Charmed 5G charm generates its private key and a certificate signing request (CSR). The CSR is then transmitted to the TLS certificate provider, which in turn signs the certificate and sends it back to the charm. Subsequently, the 5G network function utilizes this certificate to encrypt its communications with other network functions.
 
-By default, the TLS certificate provider is the [self-signed-certificates operator](https://charmhub.io/self-signed-certificates).
+By default, the TLS certificate provider employed is the [self-signed-certificates operator](https://charmhub.io/self-signed-certificates). However, users have the flexibility to utilize any TLS certificates provider as long as it supports the `tls-certificates` integration.
