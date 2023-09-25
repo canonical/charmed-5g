@@ -2,14 +2,6 @@
 
 We will integrate the 5G core network with the Canonical Observability Stack (COS).
 
-## Enable the `metallb` MicroK8s addon
-
-Enable the `metallb` addon with a range of several addresses:
-
-```console
-sudo microk8s enable metallb 10.0.0.2-10.0.0.4
-```
-
 ## Deploy the `cos-lite` bundle
 
 Create a new Juju model named `cos`:
@@ -80,7 +72,7 @@ juju run grafana/leader get-admin-password
 
 Next, find the IP address of your instance of Traefik, where we will be able to access Grafana, by
 inspecting the output of `juju status traefik`. The address will appear under the *App* section, and
-it should be in the range we provided to MetalLB. In this case it is `10.0.0.4`
+it should be in the range we provided when we enabled the MicroK8s addon. In this case it is `10.0.0.4`
 
 ```console
 $ juju status traefik
