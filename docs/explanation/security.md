@@ -15,9 +15,9 @@ ghcr.io/canonical/sdcore-smf        1.3             e15917b9cce9   18 hours ago 
 omecproject/5gc-smf                 master-latest   d4b790e2c492   4 months ago   104MB  # Upstream image
 ```
 
-The charmed 5G image of the SMF is less than half the size of the upstream image. This level of size reduction is typical for all Charmed 5G images with the total size of the SD-Core workloads being around 1GB, contrasting with 2GB in the upstream project.
+The Charmed 5G image of the SMF is less than half the size of the upstream image. This level of size reduction is typical for all Charmed 5G images with the total size of the SD-Core workloads being around 1GB, contrasting with 2GB in the upstream project.
 
-In addition to being small, the images are built on a weekly schedule. This means that the images are always up-to-date with the latest security patches and bug fixes.
+Each Charmed 5G ROCK is scanned for vulnerabilities and built on a weekly schedule. This means that the images are always up-to-date with the latest security patches and bug fixes.
 
 ## TLS everywhere
 
