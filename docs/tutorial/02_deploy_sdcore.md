@@ -14,7 +14,8 @@ Enable the Multus and MetalLB MicroK8s addons. We must give MetalLB an address
 range that has at least 3 IP addresses for Charmed 5G.
 
 ```console
-sudo microk8s enable multus metallb:10.0.0.2-10.0.0.4
+sudo microk8s enable multus
+sudo microk8s enable metallb:10.0.0.2-10.0.0.4
 ```
 
 ## Deploy the `sdcore` charm bundle
