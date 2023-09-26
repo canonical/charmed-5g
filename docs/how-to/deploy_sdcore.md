@@ -7,6 +7,7 @@
 ### Requirements
 - Juju >= 3.1
 - Kubernetes >= 1.25
+- A `LoadBalancer` Service for Kubernetes
 - Multus
 
 ### Deploy
@@ -26,6 +27,7 @@ To view all configuration options, please visit the bundle's [Charmhub page](htt
 ### Requirements
 - Juju >= 3.1
 - Kubernetes >= 1.25
+- A `LoadBalancer` Service for Kubernetes
 
 ### Deploy
 
@@ -44,6 +46,7 @@ To view all configuration options, please visit the bundle's [Charmhub page](htt
 ### Requirements
 - Juju >= 3.1
 - Kubernetes >= 1.25
+- A `LoadBalancer` Service for Kubernetes
 - Multus
 
 ### Deploy
