@@ -1,8 +1,10 @@
 # Deploy SD-Core
 
-`````{tab-set}
+This guide covers how to install a single node sdcore, suitable for lab or proof of concept purposes.
 
-````{tab-item} SD-Core
+### Requirements
+
+You will need a kubernetes cluster installed and configured with Multus.
 
 ### Requirements
 - Juju >= 3.1
@@ -20,45 +22,3 @@ juju deploy sdcore --trust --channel=edge
 
 To view all configuration options, please visit the bundle's [Charmhub page](https://charmhub.io/sdcore/).
 
-````
-
-````{tab-item} SD-Core Control Plane
-
-### Requirements
-- Juju >= 3.1
-- Kubernetes >= 1.25
-- A `LoadBalancer` Service for Kubernetes
-
-### Deploy
-
-```bash
-juju deploy sdcore-control-plane --trust --channel=edge
-```
-
-### Configure
-
-To view all configuration options, please visit the bundle's [Charmhub page](https://charmhub.io/sdcore-control-plane/).
-
-````
-
-````{tab-item} SD-Core User Plane
-
-### Requirements
-- Juju >= 3.1
-- Kubernetes >= 1.25
-- A `LoadBalancer` Service for Kubernetes
-- Multus
-
-### Deploy
-
-```bash
-juju deploy sdcore-user-plane --trust --channel=edge
-```
-
-### Configure
-
-To view all configuration options, please visit the bundle's [Charmhub page](https://charmhub.io/sdcore-user-plane/).
-
-````
-
-`````
