@@ -1,6 +1,6 @@
 # Deploy SD-Core with CUPS
 
-This guide covers how to install a multi-node sdcore with separation of user and control plane traffic.
+This guide covers how to install a multi-node SD-Core with separation of user and control plane traffic.
 
 ### Requirements
 
