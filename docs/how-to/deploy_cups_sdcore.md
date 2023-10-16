@@ -72,7 +72,7 @@ scp control-plane-cluster.yaml juju-controller.k8s.priv:
 ----------------------
 #### SD-Core User Plane
 
-All commands in this section are run on the SD-Core Control Plane Kubernetes cluster host.
+All commands in this section are run on the SD-Core User Plane Kubernetes cluster host.
 
 Install Microk8s, configure Metallb to expose 1 IP address for the UPF, and add the Multus plugin:
 
