@@ -128,7 +128,7 @@ sudo microk8s enable metallb:10.201.0.101-10.201.0.101
 Install Juju and bootstrap the controller:
 
 ```bash
-sudo snap install 
+mkdir -p ~/.local/share/juju
 sudo snap install juju --channel=3.1/stable
 sudo juju bootstrap microk8s --config controller-service-type=loadbalancer sdcore
 ```
@@ -137,9 +137,9 @@ At this point, the Juju controller is ready to start managing external clouds.  
 
 ```bash
 export KUBECONFIG=control-plane-cluster.yaml
-juju add-k8s control-plane-cluster
+juju add-k8s control-plane-cluster --controller sdcore
 export KUBECONFIG=user-plane-cluster.yaml
-juju add-k8s user-plane-cluster
+juju add-k8s user-plane-cluster --controller sdcore
 ```
 
 You may now proceed to deploy the SD-Core Control Plane and SD-Core User Plane
@@ -169,7 +169,7 @@ Next, we create a Juju model to represent the Control Plane, using the cloud `co
 juju add-model control-plane control-plane-cluster
 ```
 
-Deploy the full bundle of software for the core:
+Deploy the full bundle of software for the control plane:
 ```bash
 juju deploy sdcore-control-plane --trust --channel=edge --overlay control-plane-overlay.yaml
 ```
@@ -209,9 +209,16 @@ EOF
 ```
 [`TODO:` explanantion of the gnb subnet?  Here we used a new subnet, but nowhere in the doc do we create or explain it as it belongs in a gNBsim howto]
 
+Next, we create a Juju model to represent the User Plane, using the cloud `user-plane-cluster`, which was created in the Bootstrap step.
+
+```bash
+juju add-model user-plane user-plane-cluster
+```
+
+Deploy the bundle of software for the user plane:
+
+```bash
+juju deploy sdcore-user-plane --trust --channel=edge --overlay upf-overlay.yaml
+```
 ````
-
-
-
-
 `````
