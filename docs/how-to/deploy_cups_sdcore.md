@@ -8,7 +8,7 @@ You will need two kubernetes clusters as follows.  In this how-to, we cover inst
 - `SD-Core Control Plane`, where the full set of control plane functions will be placed (AMF, SMF, etc)
 - `SD-Core User Plane`, where the User Plane Function (UPF) will be placed
 
-A separate machine is required for the Juju controller.  While it is possible to install Juju on the same host as the SD-Core Control Plane, it is not recommended to do so.  [`TODO:` note on metallb for juju controller]
+A separate machine is required for the Juju controller. [`TODO:` note on metallb for juju controller]
 
 In the `SD-Core User Plane` cluster, the following subnets must be present:
 - `access`, where the UPF listens for incoming sessions from the gNB
