@@ -4,7 +4,7 @@ This guide covers how to install a multi-node sdcore with separation of user and
 
 ### Requirements
 
-You will need two kubernetes clusters as follows.  In this how-to, we cover installation and configuration of MicroK8s, however, any compatible Kubernetes cluster can be used.
+You will need two kubernetes clusters as follows:
 - `SD-Core Control Plane`, where the full set of control plane functions will be placed (AMF, SMF, etc)
 - `SD-Core User Plane`, where the User Plane Function (UPF) will be placed
 
