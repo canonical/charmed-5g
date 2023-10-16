@@ -4,6 +4,7 @@ AMF
 AUSF
 APIs
 Aether
+balancer
 Bitrate
 CIDR
 Charmhub
@@ -18,7 +19,7 @@ integrations
 Juju
 Kubernetes
 lifecycle
-macvlan
+MACVLAN
 MetalLB
 MicroK
 Mongo

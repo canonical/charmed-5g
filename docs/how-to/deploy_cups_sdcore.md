@@ -4,147 +4,68 @@ This guide covers how to install a multi-node SD-Core with Control Plane and Use
 
 ## Requirements
 
-You will need two Kubernetes clusters as follows.  In this how-to, we cover installation and configuration of MicroK8s, however, any compatible Kubernetes cluster can be used.
-- `SD-Core Control Plane`, where the full set of control plane functions will be placed (AMF, SMF, etc)
-- `SD-Core User Plane`, where the User Plane Function (UPF) will be placed
+- Juju 3.1 or higher has been installed
+- A load balancer type controller has been bootstrapped
+- The Juju controller is externally reachable from both Kubernetes clusters
+- Both the Kubernetes clusters have been added to the Juju controller as clouds
 
-A separate machine is required for the Juju controller. [`TODO:` note on MetalLB for Juju controller]
+### Specific Requirements for Control Plane Kubernetes cluster
 
-In the `SD-Core User Plane` cluster, the following subnets must be present:
-- `access`, where the UPF listens for incoming sessions from the gNB
-- `core`, where the UPF send out traffic from the gNB towards the internet
-- `management`, for Juju and control plane traffic.  Must also have access to the internet for downloading container images, charms, or other updates as needed
+The Control Plane Kubernetes cluster has specific requirements that must be met before continuing.
 
-[`TODO:` Add note about port security somewhere for the networks]
+- A load balancer (such as MetalLB) has been configured to expose 1 IP address for the Access and Mobility Management Function (AMF)
 
-### Sample Values
+### Specific Requirements for User Plane Kubernetes cluster
+
+The User Plane Kubernetes cluster has specific requirements that must be met before continuing.
+
+- Multus has been enabled
+- MACVLAN interfaces for access and core are available to Kubernetes
+- A load balancer (such as MetalLB) has been configured to expose 1 IP address for the User Plane Function (UPF)
+
+## Guide Sample Values
 
 For the purpose of this guide, the following values will be used.
 
-#### Networks
-
-| Name | VLAN | Subnet | Gateway IP |
-| ---- | ---- | ------ | ---------- |
-| management | 1201 | 10.201.0.0/24 | 10.201.0.1 |
-| access     | 1202 | 10.202.0.0/24 | 10.202.0.1 |
-| core       | 1203 | 10.203.0.0/24 | 10.203.0.1 |
-
-#### IP Addresses
-
-The only Domain Name Server (DNS) entry that is required is for the AMF so that the gNB can be told where to find it [`TODO:` link to gNB interface reference]
-
-| Name | IP Address | Purpose |
-| ---- | ---------- | ------- |
-| `juju-controller.k8s.priv` | 10.201.0.10 | Management address for Juju machine
-| `control-plane.k8s.priv` | 10.201.0.11 | Management address for control plane cluster machine |
-| `user-plane.k8s.priv` | 10.201.0.12 | Management address for user plane cluster machine |
-| `control-plane.juju.priv` | 10.201.0.101 | Juju controller address |
-| `upf.core.priv` | 10.201.0.151 | IP address for UPF to bind to |
-| `amf.core.priv` | 10.201.0.201 | Externally reachable control plane endpoint for the AMF |
+### Networks
+ 
+ | Name | Subnet | Gateway IP |
+ | ---- | ------ | ---------- |
+ | access | 10.202.0.0/24 | 10.202.0.1 |
+ | core   | 10.203.0.0/24 | 10.203.0.1 |
+ | gNB    | 10.204.0.0/24 | 10.204.0.1 |
 
 
-`````{tab-set}
+### Domain Name Server Entries
 
-````{tab-item} Bootstrap
+| Name | IP Address | Usage |
+| ---- | ---------- | ----- |
+| `upf.core` | 10.201.0.151 | Load balancer IP address for UPF |
+| `amf.core` | 10.201.0.201 | Load balancer IP address for AMF |
 
-This section covers how to install Juju and MicroK8s to act as the infrastructure for SD-Core, and may be skipped as needed if already done.
+### MACVLAN Interfaces
 
-----------------------
-## SD-Core Control Plane
+| MACVLAN | Purpose |
+|---------|---------|
+| `access` | Maps to the `access` subnet |
+| `core`   | Maps to the `core` subnet |
 
-All commands in this section are run on the SD-Core Control Plane Kubernetes cluster host.
+### Juju Clouds
 
-Install MicroK8s and configure MetalLB to expose 1 IP address for the AMF:
+| Cloud Name | Purpose |
+|------------|---------|
+| `control-plane-cluster` | Represents the Kubernetes cluster that executes all control plane functions |
+| `user-plane-cluster`    | Represents the Kubernetes cluster that executes all user plane functions |
 
-```bash
-sudo snap install microk8s --channel=1.27-strict/stable
-sudo microk8s enable hostpath-storage
-sudo microk8s enable metallb:10.201.0.201-10.201.0.201
-```
+## Deploy SD-Core Control Plane
 
-Export the Kubernetes configuration and copy that to the controller:
+Create a Juju overlay file that specifies the:
+- AMF host name
+- IP address for sharing with the radios
 
-```bash
-sudo microk8s.config > control-plane-cluster.yaml
-scp control-plane-cluster.yaml juju-controller.k8s.priv:
-```
+This host name must be resolvable by the gNB and the IP address must be reachable and resolve to the AMF unit.
 
-----------------------
-## SD-Core User Plane
-
-All commands in this section are run on the SD-Core User Plane Kubernetes cluster host.
-
-Install MicroK8s, configure MetalLB to expose 1 IP address for the UPF, and add the Multus plugin:
-
-```bash
-sudo snap install microk8s --channel=1.27-strict/stable
-sudo microk8s enable hostpath-storage
-sudo microk8s enable metallb:10.201.0.151-10.201-0.151
-sudo microk8s addons repo add community \
-    https://github.com/canonical/microk8s-community-addons \
-    --reference feat/strict-fix-multus
-sudo microk8s enable multus
-```
-
-Export the Kubernetes configuration and copy that to the controller:
-
-```bash
-sudo microk8s.config > user-plane-cluster.yaml
-scp user-plane-cluster.yaml juju-controller.k8s.priv:
-```
-
-In this guide, the following network interfaces are available on the SD-Core User Plane machine:
-
-| Interface Name | Purpose |
-|----------------|---------|
-| ens3           | internal Kubernetes management interface.  This maps to the `management` subnet and must have an IP address |
-| ens4           | access interface.  This maps to the `access` subnet, and does not have an IP on the host |
-| ens5           | core interface.  This maps to the `core` subnet, and does not have an IP on the host.  Note that internet egress is required here and routing tables must be set to route gNB generated traffic |
-
-----------------------
-## Juju Controller
-
-Machine Minimum Requirements
-- Ubuntu 22.04
-- a minimum of `TODO:` 2  cores
-- a minimum of `TODO:` 4  GiB memory
-- a minimum of `TODO:` 20  GiB disk space
-
-Begin by installing MicroK8s to hold the Juju controller, and configure MetalLB to expose the one IP address for it.
-
-```bash
-sudo snap install microk8s --channel=1.27-strict/stable
-sudo microk8s enable hostpath-storage
-sudo microk8s enable metallb:10.201.0.101-10.201.0.101
-sudo usermod -a -G snap_microk8s $USER
-newgrp snap_microk8s
-```
-
-Install Juju and bootstrap the controller:
-
-```bash
-mkdir -p ~/.local/share/juju
-sudo snap install juju --channel=3.1/stable
-juju bootstrap microk8s --config controller-service-type=loadbalancer sdcore
-```
-
-At this point, the Juju controller is ready to start managing external clouds.  Add the Kubernetes clusters representing the user plane and control plane to Juju.  This is done by using the Kubernetes configuration file generated when setting up the clusters above.
-
-```bash
-export KUBECONFIG=control-plane-cluster.yaml
-juju add-k8s control-plane-cluster --controller sdcore
-export KUBECONFIG=user-plane-cluster.yaml
-juju add-k8s user-plane-cluster --controller sdcore
-```
-
-You may now proceed to deploy the SD-Core Control Plane and SD-Core User Plane
-
-````
-
-
-````{tab-item} SD-Core Control Plane
-
-First, create a Juju overlay file that specifies the Access and Mobility Management Function (AMF) host name and IP address for sharing with the radios.  This host name must be resolvable by the gNB and the IP address must be reachable and resolve to the AMF unit.
+Example:
 
 ```bash
 cat << EOF > control-plane-overlay.yaml
@@ -152,11 +73,11 @@ applications:
   amf:
     options:
       external-amf-ip: 10.201.0.201
-      external-amf-hostname: amf.lab
+      external-amf-hostname: amf.core
 EOF
 ```
 
-Next, we create a Juju model to represent the Control Plane, using the cloud `control-plane-cluster`, which was created in the Bootstrap step.
+Create a Juju model to represent the Control Plane, using the cloud `control-plane-cluster`.
 
 ```bash
 juju add-model control-plane control-plane-cluster
@@ -167,24 +88,26 @@ Deploy the full bundle of software for the control plane:
 juju deploy sdcore-control-plane --trust --channel=edge --overlay control-plane-overlay.yaml
 ```
 
-Lastly, expose the Software as a Service offer for the AMF.  This is only required if the gNB is deployed using a charm and has been designed to consume the AMF offer of the 5g N2 interface from the core.
+Expose the Software as a Service offer for the AMF.  This is only required if the gNB is deployed using a charm and has been designed to consume the AMF offer of the 5g N2 interface from the core.
 
 ```bash
 juju offer control-plane.amf:fiveg-n2
 ```
 
-````
+## Deploy SD-Core User Plane
 
-````{tab-item} SD-Core User Plane
-Create a Juju model to represent the User Plane, using the cloud `user-plane-cluster`, which was created in the Bootstrap step.  The following parameters can be set:
+Create a Juju overlay file that specifies the Access and Mobility Management Function (AMF) host name and IP address for sharing with the radios.  This host name must be resolvable by the gNB and the IP address must be reachable and resolve to the AMF unit.
 
-- `access-gateway-ip`: this is the IP address of the gateway that knows how to route traffic from the UPF towards the gNB subnet
-- `access-interface`: the name of the macvlan interface on the Kubernetes host cluster to bridge to the `access` subnet
-- `access-ip`: the IP address for the UPF to use on the `access` subnet
-- `core-gateway-ip`: this is the IP address of the gateway that knows how to route traffic from the UPF towards the internet
-- `core-interface`: the name of the macvlan interface on the Kubernetes host cluster to bridge to the `core` subnet
-- `core-ip`: the IP address for the UPF to use on the `core` subnet
-- `gnb-subnet`: the subnet CIDR where the gNB radios are reachable.  Note: the `access-gateway-ip` is expected to forward the packets from the `access-interface` to the `gnb-subnet`
+Create a Juju overlay file that specifies the:
+- Access gateway IP address
+- Access interface MACVLAN name
+- Access IP address to use for the UPF
+- Core gateway IP address
+- Core interface MACVLAN name
+- Core IP address to use for the UPF
+- gNB subnet that all radios for this UPF are on
+
+Example:
 
 ```bash
 cat << EOF > upf-overlay.yaml
@@ -200,9 +123,8 @@ applications:
       gnb-subnet: 10.204.0.0/24
 EOF
 ```
-[`TODO:` explanation of the gNB subnet?  Here we used a new subnet, but nowhere in the doc do we create or explain it as it belongs in a gNB simulator how to]
 
-Next, we create a Juju model to represent the User Plane, using the cloud `user-plane-cluster`, which was created in the Bootstrap step.
+Create a Juju model to represent the User Plane, using the cloud `control-plane-cluster`.
 
 ```bash
 juju add-model user-plane user-plane-cluster
@@ -213,5 +135,3 @@ Deploy the bundle of software for the user plane:
 ```bash
 juju deploy sdcore-user-plane --trust --channel=edge --overlay upf-overlay.yaml
 ```
-````
-`````
