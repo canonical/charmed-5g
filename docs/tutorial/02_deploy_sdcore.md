@@ -35,7 +35,7 @@ juju deploy sdcore-router router --trust --channel=edge
 Create a file called `overlay.yaml` in your current working directory and place the following 
 content in it:
 
-```yaml
+```{code-block} yaml
 :caption: overlay.yaml
 applications:
   traefik-k8s:
