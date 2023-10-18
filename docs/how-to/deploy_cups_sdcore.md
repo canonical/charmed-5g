@@ -6,6 +6,7 @@ This guide covers how to install a multi-node SD-Core with Control Plane and Use
 
 - Juju 3.1 or higher has been installed
 - A load balancer type controller has been bootstrapped
+- Two kubernetes clusters are available, one for the Control Plane and one for the User Plane
 - The Juju controller is externally reachable from both Kubernetes clusters
 - Both the Kubernetes clusters have been added to the Juju controller as clouds
 
@@ -40,8 +41,8 @@ For the purpose of this guide, the following values will be used.
 
 | Name | IP Address | Usage |
 | ---- | ---------- | ----- |
-| `upf.core` | 10.201.0.151 | Load balancer IP address for UPF |
-| `amf.core` | 10.201.0.201 | Load balancer IP address for AMF |
+| `upf.core` | 10.201.0.151 | Load balancer IP address for UPF Control Plane |
+| `amf.core` | 10.201.0.201 | Load balancer IP address for AMF Control Plane |
 
 ### MACVLAN Interfaces
 
@@ -67,7 +68,7 @@ This host name must be resolvable by the gNB and the IP address must be reachabl
 
 Example:
 
-```bash
+```terminal
 cat << EOF > control-plane-overlay.yaml
 applications:
   amf:
@@ -79,18 +80,18 @@ EOF
 
 Create a Juju model to represent the Control Plane, using the cloud `control-plane-cluster`.
 
-```bash
+```terminal
 juju add-model control-plane control-plane-cluster
 ```
 
 Deploy the full bundle of software for the control plane:
-```bash
+```terminal
 juju deploy sdcore-control-plane --trust --channel=edge --overlay control-plane-overlay.yaml
 ```
 
 Expose the Software as a Service offer for the AMF.  This is only required if the gNB is deployed using a charm and has been designed to consume the AMF offer of the 5g N2 interface from the core.
 
-```bash
+```terminal
 juju offer control-plane.amf:fiveg-n2
 ```
 
@@ -109,7 +110,7 @@ Create a Juju overlay file that specifies the:
 
 Example:
 
-```bash
+```terminal
 cat << EOF > upf-overlay.yaml
 applications:
   upf:
@@ -126,12 +127,12 @@ EOF
 
 Create a Juju model to represent the User Plane, using the cloud `control-plane-cluster`.
 
-```bash
+```terminal
 juju add-model user-plane user-plane-cluster
 ```
 
 Deploy the bundle of software for the user plane:
 
-```bash
+```terminal
 juju deploy sdcore-user-plane --trust --channel=edge --overlay upf-overlay.yaml
 ```
