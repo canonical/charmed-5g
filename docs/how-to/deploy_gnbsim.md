@@ -4,11 +4,11 @@ This guide covers how to install and configure the ONF gNB Simulator.
 
 ## Requirements
 
-- Juju 3.1 or higher has been installed
-- A controller has been bootstrapped
-- A Kubernetes cloud has been added to Juju
+- Juju >= 3.1
+- A Juju controller has been bootstrapped
+- A Kubernetes cloud has been added to the Juju controller
 - Multus has been enabled for the Kubernetes cloud
-- MACVLAN interface for gNB radio subnet aris available to Kubernetes
+- MACVLAN interface for gNB radio subnet is available to Kubernetes
 
 ## Guide Sample Values
 

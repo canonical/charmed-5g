@@ -4,7 +4,7 @@ This guide covers how to install a multi-node SD-Core with Control Plane and Use
 
 ## Requirements
 
-- Juju 3.1 or higher has been installed
+- Juju >= 3.1
 - A load balancer type controller has been bootstrapped
 - Two kubernetes clusters are available, one for the Control Plane and one for the User Plane
 - The Juju controller is externally reachable from both Kubernetes clusters
