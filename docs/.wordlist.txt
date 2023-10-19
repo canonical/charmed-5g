@@ -16,10 +16,13 @@ integrations
 Juju
 Kubernetes
 lifecycle
+MCC
 MetalLB
 MicroK
+MNC
 Mongo
 Multus
+NMS
 NRF
 NSSF
 Observability
@@ -37,3 +40,4 @@ UPF
 unsecure
 Webui
 Ryzen
+yaml

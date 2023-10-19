@@ -3,7 +3,18 @@
 Configuration of the 5G core network is done using the NMS (Network Management System) graphical
 interface. Here we will create a subscriber, a device group and a network slice.
 
-Access the NMS at `https://<model name>-nms.<your hostname>` and click on the `Configure` button
+Get the IP address of your instance of Traefik, where we will be able to access the NMS, by
+inspecting the output of `juju status traefik-k8s`. The address will appear under the *App* 
+section, and it should be in the range provided for the MetalLB which we enabled in the previous
+step. In this case it is `10.0.0.3`.
+
+Add below entry to your `/etc/hosts` file:
+
+```shell
+10.0.0.3 core-nms.<your hostname>
+```
+
+Access the NMS at `https://core-nms.<your hostname>` and click on the `Configure` button
 and create a new network with MCC of `208` and MNC of `93`:
 
 ```{image} ../images/configure_5g_network.png
