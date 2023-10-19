@@ -87,18 +87,7 @@ juju offer control-plane.amf:fiveg-n2
 
 ## Deploy SD-Core User Plane
 
-Create a Juju overlay file that specifies the Access and Mobility Management Function (AMF) host name and IP address for sharing with the radios.  This host name must be resolvable by the gNB and the IP address must be reachable and resolve to the AMF unit.
-
-Create a Juju overlay file that specifies the:
-- Access gateway IP address
-- Access interface MACVLAN name
-- Access IP address to use for the UPF
-- Core gateway IP address
-- Core interface MACVLAN name
-- Core IP address to use for the UPF
-- gNB subnet that all radios for this UPF are on
-
-Example:
+Create a Juju overlay file with the following content:
 
 ```console
 cat << EOF > upf-overlay.yaml
