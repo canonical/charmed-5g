@@ -79,7 +79,7 @@ Deploy the control plane bundle:
 juju deploy sdcore-control-plane --trust --channel=edge --overlay control-plane-overlay.yaml
 ```
 
-Expose the Software as a Service offer for the AMF.  This is only required if the gNB is deployed using a charm and has been designed to consume the AMF offer of the 5g N2 interface from the core.
+Expose the integration offer for the AMF N2 interface. 
 
 ```console
 juju offer control-plane.amf:fiveg-n2
