@@ -58,7 +58,7 @@ This host name must be resolvable by the gNB and the IP address must be reachabl
 
 Example:
 
-```terminal
+```console
 cat << EOF > control-plane-overlay.yaml
 applications:
   amf:
@@ -70,18 +70,18 @@ EOF
 
 Create a Juju model to represent the Control Plane, using the cloud `control-plane-cluster`.
 
-```terminal
+```console
 juju add-model control-plane control-plane-cluster
 ```
 
 Deploy the full bundle of software for the control plane:
-```terminal
+```console
 juju deploy sdcore-control-plane --trust --channel=edge --overlay control-plane-overlay.yaml
 ```
 
 Expose the Software as a Service offer for the AMF.  This is only required if the gNB is deployed using a charm and has been designed to consume the AMF offer of the 5g N2 interface from the core.
 
-```terminal
+```console
 juju offer control-plane.amf:fiveg-n2
 ```
 
@@ -100,7 +100,7 @@ Create a Juju overlay file that specifies the:
 
 Example:
 
-```terminal
+```console
 cat << EOF > upf-overlay.yaml
 applications:
   upf:
@@ -117,12 +117,12 @@ EOF
 
 Create a Juju model to represent the User Plane, using the cloud `control-plane-cluster`.
 
-```terminal
+```console
 juju add-model user-plane user-plane-cluster
 ```
 
 Deploy the bundle of software for the user plane:
 
-```terminal
+```console
 juju deploy sdcore-user-plane --trust --channel=edge --overlay upf-overlay.yaml
 ```
