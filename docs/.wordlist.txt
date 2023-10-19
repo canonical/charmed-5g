@@ -4,7 +4,6 @@ AMF
 AUSF
 APIs
 Aether
-balancer
 Bitrate
 Charmhub
 CharmHub
@@ -17,7 +16,6 @@ integrations
 Juju
 Kubernetes
 lifecycle
-MACVLAN
 MetalLB
 MicroK
 Mongo
@@ -34,8 +32,6 @@ Rockcraft
 Ryzen
 sdcore
 SMF
-Subnet
-subnet
 TLS
 Traefik
 UDM

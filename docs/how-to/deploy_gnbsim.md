@@ -6,13 +6,12 @@ This guide covers how to install and configure the ONF gNB Simulator.
 
 - Juju >= 3.1
 - A Juju controller has been bootstrapped
-- A Kubernetes cloud called `gnbsim-cloud` has been added to the Juju controller 
-- Multus has been enabled for the Kubernetes cloud
-- MACVLAN interface for gNB radio subnet is available to Kubernetes
+- A Kubernetes cluster configured with Multus
+- 1 Juju cloud for the Kubernetes cluster has been added 
 
 ## Deploy gNB Simulator
 
-Create a Juju model to represent the gNB Simulator application.
+Create a Juju model.
 
 ```console
 juju add-model gnbsim gnbsim-cloud
@@ -29,7 +28,7 @@ juju deploy sdcore-gnbsim gnbsim --trust --channel=edge \
   --config upf-ip-address=10.202.0.10
 ```
 
-Integrate the simulator with the offering from the already deployed SD-Core
+Integrate the simulator with the offering from SD-Core.
 
 ```console
 juju consume control-plane.amf
