@@ -74,7 +74,7 @@ Create a Juju model to represent the Control Plane, using the cloud `control-pla
 juju add-model control-plane control-plane-cluster
 ```
 
-Deploy the full bundle of software for the control plane:
+Deploy the control plane bundle:
 ```console
 juju deploy sdcore-control-plane --trust --channel=edge --overlay control-plane-overlay.yaml
 ```
@@ -121,7 +121,7 @@ Create a Juju model to represent the User Plane, using the cloud `control-plane-
 juju add-model user-plane user-plane-cluster
 ```
 
-Deploy the bundle of software for the user plane:
+Deploy user plane bundle:
 
 ```console
 juju deploy sdcore-user-plane --trust --channel=edge --overlay upf-overlay.yaml
