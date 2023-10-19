@@ -50,13 +50,7 @@ For the purpose of this guide, the following values will be used.
 
 ## Deploy SD-Core Control Plane
 
-Create a Juju overlay file that specifies the:
-- AMF host name
-- IP address for sharing with the radios
-
-This host name must be resolvable by the gNB and the IP address must be reachable and resolve to the AMF unit.
-
-Example:
+Create a Juju overlay file with the following content:
 
 ```console
 cat << EOF > control-plane-overlay.yaml
