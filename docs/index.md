@@ -15,7 +15,7 @@ Charmed 5G is for private mobile networks operators and all connectivity enthusi
 ````{grid} 1 1 2 2
 
 ```{grid-item-card}
-:link: tutorial/index
+:link: tutorial/
 
 Tutorial
 ^^^
@@ -24,7 +24,7 @@ Tutorial
 ```
 
 ```{grid-item-card}
-:link: how-to/index
+:link: how-to/
 
 How-to guides
 ^^^
@@ -38,7 +38,7 @@ How-to guides
 ````{grid} 1 1 2 2
 
 ```{grid-item-card}
-:link: reference/index
+:link: reference/
 
 **Reference**
 ^^^
@@ -47,7 +47,7 @@ How-to guides
 ```
 
 ```{grid-item-card}
-:link: explanation/index
+:link: explanation/
 
 Explanation
 ^^^
