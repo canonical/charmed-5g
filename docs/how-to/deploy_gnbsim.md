@@ -6,58 +6,19 @@ This guide covers how to install and configure the ONF gNB Simulator.
 
 - Juju >= 3.1
 - A Juju controller has been bootstrapped
-- A Kubernetes cloud has been added to the Juju controller
+- A Kubernetes cloud called `gnbsim-cloud` has been added to the Juju controller 
 - Multus has been enabled for the Kubernetes cloud
 - MACVLAN interface for gNB radio subnet is available to Kubernetes
 
-## Guide Sample Values
-
-For the purpose of this guide, the following values will be used.
-
-### Networks
- 
-| Name   | Subnet |
-| ------ | ------ |
-| access | 10.202.0.0/24 |
-| ran    | 10.204.0.0/24 |
-
-## IP Addresses
-
-| Network  | Address | Purpose |
-| -------- | ------- | ------- |
-| `access` | 10.202.0.1  | IP address of the gateway for this network
-| `access` | 10.202.0.10 | IP address of the UPF
-| `ran`    | 10.204.0.1  | IP address of the gateway for this network
-| `ran`    | 10.204.0.10 | IP address of the gNB simulator
-
-### MACVLAN Interfaces
-
-| MACVLAN | Purpose |
-|---------|---------|
-| `ran`   | Maps to the `ran` subnet |
-
-### Juju Clouds
-
-| Cloud Name | Purpose |
-|------------|---------|
-| `gnbsim-cluster` | Represents the Kubernetes cluster where the simulator is to be deployed |
-
 ## Deploy gNB Simulator
 
-Create a Juju model to represent the gNB Simulator application, using the cloud `gnbsim-cluster`.
+Create a Juju model to represent the gNB Simulator application.
 
 ```console
-juju add-model gnbsim gnbsim-cluster
+juju add-model gnbsim gnbsim-cloud
 ```
 
-Deploy the `sdcore-gnbsim` operator, providing values for
-- GNB Interface MACVLAN name on the Kubernetes host
-- GNB IP address to use on the GNB MACVLAN interface
-- ICMP Packet Destination, which is the target the simulator will attempt to ping
-- UPF Gateway IP address on the GNB MACVLAN interface
-- UPF IP address of the UPF can be reached on its `access` network `TODO: this should become a relation`
-
-Example:
+Deploy the `sdcore-gnbsim` operator charm.
 
 ```console
 juju deploy sdcore-gnbsim gnbsim --trust --channel=edge \
@@ -74,4 +35,3 @@ Integrate the simulator with the offering from the already deployed SD-Core
 juju consume control-plane.amf
 juju integrate gnbsim:fiveg-n2 amf:fiveg-n2
 ```
-

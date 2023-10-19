@@ -11,42 +11,7 @@ This guide covers how to install a multi-node SD-Core with Control Plane and Use
 - A User Plane Kubernetes cluster configured with
   - A load balancer with at least 1 available IP address for the User Plane Function (UPF)
   - Multus
-  - 2 MACVLAN interfaces, one each for access and core networks
-- 1 Juju cloud per Kubernetes cluster named `control-plane-cluster` and `user-plane-cluster`
-
-## Guide Sample Values
-
-For the purpose of this guide, the following values will be used.
-
-### Networks
- 
- | Name | Subnet | Gateway IP |
- | ---- | ------ | ---------- |
- | access | 10.202.0.0/24 | 10.202.0.1 |
- | core   | 10.203.0.0/24 | 10.203.0.1 |
- | gNB    | 10.204.0.0/24 | 10.204.0.1 |
-
-
-### Domain Name Server Entries
-
-| Name | IP Address | Usage |
-| ---- | ---------- | ----- |
-| `upf.core` | 10.201.0.151 | Load balancer IP address for UPF Control Plane |
-| `amf.core` | 10.201.0.201 | Load balancer IP address for AMF Control Plane |
-
-### MACVLAN Interfaces
-
-| MACVLAN | Purpose |
-|---------|---------|
-| `access` | Maps to the `access` subnet |
-| `core`   | Maps to the `core` subnet |
-
-### Juju Clouds
-
-| Cloud Name | Purpose |
-|------------|---------|
-| `control-plane-cluster` | Represents the Kubernetes cluster that executes all control plane functions |
-| `user-plane-cluster`    | Represents the Kubernetes cluster that executes all user plane functions |
+- 1 Juju cloud per Kubernetes cluster named `control-plane-cloud` and `user-plane-cloud` respectively
 
 ## Deploy SD-Core Control Plane
 
@@ -62,10 +27,10 @@ applications:
 EOF
 ```
 
-Create a Juju model to represent the Control Plane, using the cloud `control-plane-cluster`.
+Create a Juju model to represent the Control Plane.
 
 ```console
-juju add-model control-plane control-plane-cluster
+juju add-model control-plane control-plane-cloud
 ```
 
 Deploy the control plane bundle:
@@ -98,10 +63,10 @@ applications:
 EOF
 ```
 
-Create a Juju model to represent the User Plane, using the cloud `control-plane-cluster`.
+Create a Juju model to represent the User Plane.
 
 ```console
-juju add-model user-plane user-plane-cluster
+juju add-model user-plane user-plane-cloud
 ```
 
 Deploy user plane bundle:
