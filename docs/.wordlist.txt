@@ -15,6 +15,7 @@ GiB
 Gnbsim
 gNB
 Grafana
+ICMP
 integrations
 Juju
 Kubernetes
@@ -29,6 +30,7 @@ NSSF
 Observability
 OCI
 ONOS
+ONF
 ONF's
 PCF
 Permalink

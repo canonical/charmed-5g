@@ -5,24 +5,14 @@ This guide covers how to install a multi-node SD-Core with Control Plane and Use
 ## Requirements
 
 - Juju >= 3.1
-- A load balancer type controller has been bootstrapped
-- Two kubernetes clusters are available, one for the Control Plane and one for the User Plane
-- The Juju controller is externally reachable from both Kubernetes clusters
-- Both the Kubernetes clusters have been added to the Juju controller as clouds
-
-### Specific Requirements for Control Plane Kubernetes cluster
-
-The Control Plane Kubernetes cluster has specific requirements that must be met before continuing.
-
-- A load balancer (such as MetalLB) has been configured to expose 1 IP address for the Access and Mobility Management Function (AMF)
-
-### Specific Requirements for User Plane Kubernetes cluster
-
-The User Plane Kubernetes cluster has specific requirements that must be met before continuing.
-
-- Multus has been enabled
-- MACVLAN interfaces for access and core are available to Kubernetes
-- A load balancer (such as MetalLB) has been configured to expose 1 IP address for the User Plane Function (UPF)
+- A load balancer type Juju controller has been bootstrapped, and is externally reachable
+- A Control Plane Kubernetes cluster configured with
+  - A load balancer with at least 1 available IP address for the Access and Mobility Management Function (AMF)
+- A User Plane Kubernetes cluster configured with
+  - A load balancer with at least 1 available IP address for the User Plane Function (UPF)
+  - Multus
+  - 2 MACVLAN interfaces, one each for access and core networks
+- 1 Juju cloud per Kubernetes cluster named `control-plane-cluster` and `user-plane-cluster`
 
 ## Guide Sample Values
 

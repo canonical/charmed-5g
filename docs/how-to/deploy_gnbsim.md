@@ -46,12 +46,12 @@ For the purpose of this guide, the following values will be used.
 
 Create a Juju model to represent the gNB Simulator application, using the cloud `gnbsim-cluster`.
 
-```terminal
+```console
 juju add-model gnbsim gnbsim-cluster
 ```
 
 Deploy the `sdcore-gnbsim` operator, providing values for
-- GNB Interface MACVLAN name on the kubernetes host
+- GNB Interface MACVLAN name on the Kubernetes host
 - GNB IP address to use on the GNB MACVLAN interface
 - ICMP Packet Destination, which is the target the simulator will attempt to ping
 - UPF Gateway IP address on the GNB MACVLAN interface
@@ -59,7 +59,7 @@ Deploy the `sdcore-gnbsim` operator, providing values for
 
 Example:
 
-```terminal
+```console
 juju deploy sdcore-gnbsim gnbsim --trust --channel=edge \
   --config gnb-interface=ran \
   --config gnb-ip-address=10.204.0.10/24 \
@@ -70,7 +70,7 @@ juju deploy sdcore-gnbsim gnbsim --trust --channel=edge \
 
 Integrate the simulator with the offering from the already deployed SD-Core
 
-```terminal
+```console
 juju consume control-plane.amf
 juju integrate gnbsim:fiveg-n2 amf:fiveg-n2
 ```
