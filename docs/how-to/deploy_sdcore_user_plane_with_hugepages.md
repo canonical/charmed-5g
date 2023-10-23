@@ -43,10 +43,17 @@ applications:
 EOF
 ```
 
+<<<<<<< HEAD
 Deploy the `sdcore-user-plane-k8s` bundle.
 
 ```console
 juju deploy sdcore-user-plane-k8s --trust --channel=edge --overlay upf-overlay.yaml
+=======
+Deploy the `sdcore-user-plane` bundle.
+
+```console
+juju deploy sdcore-user-plane --trust --channel=edge --overlay upf-overlay.yaml
+>>>>>>> a7cf061 (Initial draft)
 ```
 
 ## Validate HugePages support
@@ -63,4 +70,8 @@ Besides, PacketPool is created with name `DpdkPacketPool` in bessd container log
 ```console
 $ kubectl logs -f  sdcore-upf-0 -c  bessd -n user-plane  | grep -i pool
 2023-10-26T12:33:35.705Z [bessd] I1026 12:33:35.705854    54 packet_pool.cc:49] Creating DpdkPacketPool for 262144 packets on node 0
+<<<<<<< HEAD
 ```
+=======
+```
+>>>>>>> a7cf061 (Initial draft)

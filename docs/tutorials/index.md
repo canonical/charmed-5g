@@ -25,4 +25,9 @@ problems, we want to help you, so please let us know.
 :maxdepth: 1
 
 getting_started
+<<<<<<< HEAD
+=======
+mastering
+
+>>>>>>> a7cf061 (Initial draft)
 ```
