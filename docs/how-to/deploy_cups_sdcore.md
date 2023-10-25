@@ -11,6 +11,7 @@ This guide covers how to install a multi-node SD-Core with Control Plane and Use
 - A User Plane Kubernetes cluster configured with
   - 1 available IP address for the User Plane Function (UPF)
   - Multus
+  - MACVLAN or SR-IOV interfaces for Access and Core networks
 - 1 Juju cloud per Kubernetes cluster named `control-plane-cloud` and `user-plane-cloud` respectively
 
 ## Deploy SD-Core Control Plane
