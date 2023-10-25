@@ -13,9 +13,11 @@ gNB
 Grafana
 ICMP
 integrations
+IOV
 Juju
 Kubernetes
 lifecycle
+MACVLAN
 MetalLB
 MicroK
 Mongo
