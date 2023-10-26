@@ -6,7 +6,6 @@ AMF
 AUSF
 APIs
 Aether
-BESSD
 Bitrate
 Charmhub
 CharmHub
@@ -15,9 +14,6 @@ gNB
 DN
 Gnbsim
 Grafana
-GRPC
-GTP
-HTTPS
 integrations
 Juju
 K8s
@@ -39,12 +35,9 @@ OCI
 ONOS
 ONF's
 PCF
-PFCP
+RAN
 Rockcraft
-SBI
-SCTP
 SMF
-TCP
 TLS
 Traefik
 UDM

@@ -16,20 +16,9 @@ UPF Interfaces/reference points with employed protocols:
 - K8s LoadBalancer (N4): Interface between the Session Management Function (SMF) and the UPF  
 
 
-UPF endpoints are given in the below table:
+Connectivity between Control Plane and User Plane:
 
-| **UPF PORT NAME** | **PORT NUMBER**      | **PROTOCOL**  |
-|:------------------|:---------------------|:--------------|
-| PFCP              | 8805                 | UDP           |
-| BESSD             | 10514                | TCP           |
+| Protocol | Source Module | Source Port | Destination Module | Destination Port | 
+|----------|---------------|-------------|--------------------|------------------|
+| UDP      | SMF           | 8805        | UPF                | 8805             |
 
-
-
-AMF endpoints are given in the below table:
-
-| **AMF PORT NAME** | **PORT NUMBER**     | **PROTOCOL** |
-|:------------------|:--------------------|:-------------|
-| NGAPP             | 38412               | SCTP         |
-| SBI               | 29518               | HTTPS        |
-| GRPC              | 9000                | TCP          |
-                         
