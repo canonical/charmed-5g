@@ -7,4 +7,5 @@ These how-to guides cover key operations and processes in Charmed 5G.
 
 deploy_sdcore
 integrate_sdcore_with_observability
+enable_hugepages_for_upf
 ```
