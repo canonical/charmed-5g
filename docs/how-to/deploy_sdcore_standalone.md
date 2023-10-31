@@ -1,6 +1,6 @@
-# Deploy SD-Core
+# Deploy SD-Core Standalone
 
-This guide covers how to install a single node sdcore, suitable for lab or proof of concept purposes.
+This guide covers how to install a standalone SD-Core 5G core network, suitable for lab or proof of concept purposes.
 
 ## Requirements
 
@@ -20,4 +20,3 @@ juju deploy sdcore --trust --channel=edge
 ## Configure
 
 To view all configuration options, please visit the bundle's [Charmhub page](https://charmhub.io/sdcore/).
-
