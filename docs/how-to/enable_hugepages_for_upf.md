@@ -29,7 +29,7 @@ $ kubectl logs -f  sdcore-upf-0 -c  bessd -n user-plane  | grep -i "huge-unlink"
 
 Besides, PacketPool is created with name `DpdkPacketPool` in bessd container logs if HugePages is enabled.
 
-```bash
+```console
 $ kubectl logs -f  sdcore-upf-0 -c  bessd -n user-plane  | grep -i pool
 2023-10-26T12:33:35.705Z [bessd] I1026 12:33:35.705854    54 packet_pool.cc:49] Creating DpdkPacketPool for 262144 packets on node 0
 ```
