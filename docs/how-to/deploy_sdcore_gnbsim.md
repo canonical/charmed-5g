@@ -1,6 +1,6 @@
-# Deploy ONF gNB Simulator
+# Deploy SD-Core gNB Simulator
 
-This guide covers how to install and configure the ONF gNB Simulator.
+This guide covers how to install and configure the SD-Core gNB Simulator.
 
 ## Requirements
 

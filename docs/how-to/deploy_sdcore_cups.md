@@ -1,6 +1,6 @@
-# Deploy SD-Core with CUPS
+# Deploy SD-Core with Control Plane and User Plane Separation
 
-This guide covers how to install a multi-node SD-Core with Control Plane and User Plane Separation (CUPS).
+This guide covers how to install a SD-Core 5G core network with Control Plane and User Plane Separation (CUPS).
 
 ## Requirements
 
