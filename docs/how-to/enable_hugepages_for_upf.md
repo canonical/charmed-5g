@@ -22,7 +22,7 @@ juju deploy sdcore-upf --trust --channel=edge --config enable-hugepages=True
 
 Check the bessd container logs which indicate that the HugePages are reserved.
 
-```bash
+```console
 $ kubectl logs -f  sdcore-upf-0 -c  bessd -n user-plane  | grep -i "huge-unlink"
 2023-10-26T12:33:35.495Z [bessd] I1026 12:33:35.495568    54 dpdk.cc:169] Initializing DPDK EAL with options: ["bessd", "--main-lcore", "127", "--lcore", "127@0-31", "--no-shconf", "--legacy-mem", "--socket-mem", "1024", "--huge-unlink"]
 ```
