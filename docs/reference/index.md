@@ -5,4 +5,5 @@
 
 charms
 deployment_options
+networking
 ```
