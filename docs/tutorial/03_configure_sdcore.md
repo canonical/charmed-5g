@@ -63,6 +63,7 @@ curl -v ${WEBUI_IP}:5000/config/v1/device-group/cows \
         "ue-dnn-qos": {
             "dnn-mbr-uplink": 20000000,
             "dnn-mbr-downlink": 200000000,
+            "bitrate-unit": "bps",
             "traffic-class": {
                 "name": "platinum",
                 "arp": 6,
