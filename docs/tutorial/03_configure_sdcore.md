@@ -37,7 +37,6 @@ curl -v ${WEBUI_IP}:5000/api/subscriber/imsi-208930100007487 \
 --header 'Content-Type: text/plain' \
 --data '{
     "UeId":"208930100007487",
-    "plmnId":"20801",
     "opc":"981d464c7c52eb6e5036234984ad0bcf",
     "key":"5122250214c33e723a5dd523fc145fc0",
     "sequenceNumber":"16f3b3f70fc2"
