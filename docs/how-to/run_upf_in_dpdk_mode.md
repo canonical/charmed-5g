@@ -26,6 +26,12 @@ echo "vfio-pci" > /etc/modules-load.d/vfio-pci.conf
 modprobe vfio-pci
 ```
 
+```{note}
+Using `vfio-pci`, by default, needs IOMMU to be enabled. In the environments which do not support
+IOMMU, `vfio-pci` needs to be loaded with additional module parameter:
+`echo "options vfio enable_unsafe_noiommu_mode=1" > /etc/modprobe.d/vfio-noiommu.conf`
+```
+
 Get PCI address of `access` and `core` interfaces:
 
 ```shell
