@@ -26,6 +26,7 @@ hugepages
 HugePages
 ICMP
 integrations
+IOMMU
 IOV
 Juju
 K8s
