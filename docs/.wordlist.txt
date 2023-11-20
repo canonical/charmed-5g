@@ -9,11 +9,14 @@ bessd
 Bitrate
 Charmhub
 CharmHub
+CNI
+ConfigMap
 CSR
 Gi
 gb
 gNB
 DN
+DPDK
 Gnbsim
 gNB
 Grafana
@@ -46,6 +49,7 @@ ONOS
 ONF
 ONF's
 PacketPool
+PCI
 PCF
 pdpe
 RDRAND
