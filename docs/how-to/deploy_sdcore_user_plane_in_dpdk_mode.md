@@ -50,7 +50,7 @@ sudo driverctl set-override 0000:00:06.0 vfio-pci
 sudo driverctl set-override 0000:00:07.0 vfio-pci
 ```
 
-## Configure Kubernetes plumbing required by DPDK
+## Configure Kubernetes for DPDK
 
 Create ConfigMap with configuration for the [SR-IOV Network Device Plugin]:
 
