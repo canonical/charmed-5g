@@ -17,7 +17,7 @@ the `sdcore-user-plane` Juju bundle.
 - A Juju controller bootstrapped onto the Kubernetes cluster
 - Juju model created
 
-## Changing the driver of the network interfaces to `vfio-pci`
+## Change the driver of the network interfaces to `vfio-pci`
 
 As `root` user, load the `vfio-pci` driver on the Kubernetes host:
 
@@ -50,7 +50,7 @@ sudo driverctl set-override 0000:00:06.0 vfio-pci
 sudo driverctl set-override 0000:00:07.0 vfio-pci
 ```
 
-## Configuring Kubernetes plumbing required by DPDK
+## Configure Kubernetes plumbing required by DPDK
 
 Create ConfigMap with configuration for the [SR-IOV Network Device Plugin]:
 
@@ -95,7 +95,7 @@ sudo wget -O /opt/cni/bin/vfioveth https://raw.githubusercontent.com/opencord/om
 sudo chmod +x /opt/cni/bin/vfioveth
 ```
 
-## Deploying SD-Core UPF Operator
+## Deploy SD-Core UPF Operator
 
 Create a Juju overlay file.
 
