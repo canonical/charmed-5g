@@ -19,6 +19,9 @@ the `sdcore-user-plane` Juju bundle.
 
 ## Set up network interfaces
 
+This paragraph outlines the steps needed to change the driver of the network interfaces
+from the default one to `vfio-pci`.
+
 As `root` user, load the `vfio-pci` driver on the Kubernetes host:
 
 ```shell
@@ -51,6 +54,9 @@ sudo driverctl set-override 0000:00:07.0 vfio-pci
 ```
 
 ## Configure Kubernetes cluster
+
+This paragraph outlines the steps needed to configure Kubernetes plumbing required 
+to run the UPF in DPDK mode.
 
 Create ConfigMap with configuration for the [SR-IOV Network Device Plugin]:
 
