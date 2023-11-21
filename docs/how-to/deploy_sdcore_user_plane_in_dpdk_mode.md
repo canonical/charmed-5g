@@ -1,4 +1,4 @@
-# Run UPF in DPDK mode
+# Deploy SD-Core User Plane in DPDK mode
 
 This guide covers how to deploy the User Plane Function (UPF) in DPDK mode using 
 the `sdcore-user-plane` Juju bundle.
