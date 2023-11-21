@@ -247,7 +247,7 @@ curl -v ${WEBUI_IP}:5000/config/v1/network-slice/default \
 }'
 ```
 
-## 5. Run the 5G simulation
+## 4. Run the 5G simulation
 
 ### Deploy the simulator
 
@@ -288,7 +288,7 @@ info: run juju debug-log to get more information.
 success: "true"
 ```
 
-## 6. Destroy the environment
+## 5. Destroy the environment
 
 Destroy the Juju controller and all its models
 
