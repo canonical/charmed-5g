@@ -11,4 +11,5 @@ deploy_sdcore_gnbsim
 integrate_sdcore_with_observability
 enable_hugepages_for_upf
 backup_sdcore
+restore_sdcore
 ```
