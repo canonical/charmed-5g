@@ -15,8 +15,6 @@ requirements:
 We will get started by installing MicroK8s on your machine and bootstrapping a Juju controller on 
 this MicroK8s instance. 
 
-### Install MicroK8s
-
 From your terminal, install MicroK8s:
 
 ```console
@@ -35,8 +33,6 @@ Enable the `hostpath-storage` MicroK8s addon:
 ```console
 sudo microk8s enable hostpath-storage
 ```
-
-### Install Juju
 
 From your terminal, install Juju.
 
@@ -59,11 +55,7 @@ directory:
 
 ## 2. Deploy SD-Core
 
-Now we will deploy the `sdcore` charm bundle that contains a complete 5G core network.
-
-### Enable the Multus MicroK8s addon
-
-Add the community repository addon:
+Add the community repository MicroK8s addon:
 
 ```console
 sudo microk8s addons repo add community https://github.com/canonical/microk8s-community-addons --reference feat/strict-fix-multus
@@ -76,8 +68,6 @@ range that has at least 3 IP addresses for Charmed 5G.
 sudo microk8s enable multus
 sudo microk8s enable metallb:10.0.0.2-10.0.0.4
 ```
-
-### Deploy the `sdcore` charm bundle
 
 Create a Juju model named `core`:
 
@@ -249,14 +239,6 @@ curl -v ${WEBUI_IP}:5000/config/v1/network-slice/default \
 
 ## 4. Run the 5G simulation
 
-### Deploy the simulator
-
-Switch to the `core` Juju model:
-
-```console
-juju switch core
-```
-
 Deploy the `sdcore-gnbsim` operator
 
 ```console
@@ -269,7 +251,7 @@ Integrate it to the AMF:
 juju integrate gnbsim:fiveg-n2 amf:fiveg-n2
 ```
 
-### Run the simulation
+Run the simulation
 
 ```console
 juju run gnbsim/leader start-simulation
