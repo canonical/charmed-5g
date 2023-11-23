@@ -10,10 +10,7 @@ requirements:
 - 8GB of RAM
 - 50GB of free disk space
 
-## 1. Bootstrap a Juju controller
-
-We will get started by installing MicroK8s on your machine and bootstrapping a Juju controller on 
-this MicroK8s instance. 
+## 1. Install MicroK8s
 
 From your terminal, install MicroK8s:
 
@@ -28,11 +25,22 @@ sudo usermod -a -G snap_microk8s $USER
 newgrp snap_microk8s
 ```
 
-Enable the `hostpath-storage` MicroK8s addon:
+Add the community repository MicroK8s addon:
+
+```console
+sudo microk8s addons repo add community https://github.com/canonical/microk8s-community-addons --reference feat/strict-fix-multus
+```
+
+Enable the following MicroK8s addons. We must give MetalLB an address
+range that has at least 3 IP addresses for Charmed 5G.
 
 ```console
 sudo microk8s enable hostpath-storage
+sudo microk8s enable multus
+sudo microk8s enable metallb:10.0.0.2-10.0.0.4
 ```
+
+## 2. Bootstrap a Juju controller
 
 From your terminal, install Juju.
 
@@ -53,21 +61,8 @@ directory:
 `mkdir -p /home/ubuntu/.local/share`
 ```
 
-## 2. Deploy SD-Core
+## 3. Deploy SD-Core
 
-Add the community repository MicroK8s addon:
-
-```console
-sudo microk8s addons repo add community https://github.com/canonical/microk8s-community-addons --reference feat/strict-fix-multus
-```
-
-Enable the Multus and MetalLB MicroK8s addons. We must give MetalLB an address
-range that has at least 3 IP addresses for Charmed 5G.
-
-```console
-sudo microk8s enable multus
-sudo microk8s enable metallb:10.0.0.2-10.0.0.4
-```
 
 Create a Juju model named `core`:
 
@@ -127,7 +122,7 @@ upf/0*                active    idle   10.1.19.147
 webui/0*              active    idle   10.1.19.189
 ```
 
-## 3. Configure SD-Core
+## 4. Configure SD-Core
 
 Configuring the 5G core network is done making HTTP requests to the `webui` service. Here we will 
 create a subscriber, a device group and a network slice.
@@ -237,7 +232,7 @@ curl -v ${WEBUI_IP}:5000/config/v1/network-slice/default \
 }'
 ```
 
-## 4. Run the 5G simulation
+## 5. Run the 5G simulation
 
 Deploy the `sdcore-gnbsim` operator
 
@@ -270,7 +265,7 @@ info: run juju debug-log to get more information.
 success: "true"
 ```
 
-## 5. Destroy the environment
+## 6. Destroy the environment
 
 Destroy the Juju controller and all its models
 
