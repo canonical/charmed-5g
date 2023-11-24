@@ -60,7 +60,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: sriovdp-config
-  namespace: kube-config
+  namespace: kube-system
 data:
   config.json: |
     {
