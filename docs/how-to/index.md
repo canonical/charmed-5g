@@ -11,7 +11,7 @@ deploy_sdcore_standalone
 deploy_sdcore_cups
 deploy_sdcore_gnbsim
 integrate_sdcore_with_observability
-enable_hugepages_for_upf
+deploy_sdcore_user_plane_with_hugepages
 ```
 
 ## Day 2 operations
