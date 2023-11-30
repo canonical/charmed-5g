@@ -25,7 +25,7 @@ juju deploy sdcore-gnbsim gnbsim --trust --channel=edge \
   --config gnb-ip-address=10.204.0.10/24 \
   --config icmp-packet-destination=8.8.8.8 \
   --config upf-gateway=10.204.0.1 \
-  --config upf-ip-address=10.202.0.10
+  --config upf-subnet=10.202.0.0/24
 ```
 
 Integrate the simulator with the offering from SD-Core.
