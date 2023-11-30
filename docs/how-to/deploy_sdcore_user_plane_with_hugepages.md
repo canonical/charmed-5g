@@ -31,7 +31,7 @@ echo "vm.nr_hugepages=2" | tee /etc/sysctl.d/hugepages.conf
 ```
 Then reboot the host.
 
-## Deploy SD-Core UPF Operator
+## Deploy SD-Core User Plane
 
 Create a Juju overlay file.
 
