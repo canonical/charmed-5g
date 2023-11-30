@@ -6,7 +6,7 @@ the `sdcore-user-plane` Juju bundle.
 ## Requirements
 
 - A Kubernetes host which meets the following requirements: 
-  - CPU that supports AVX2 and RDRAND and PDPE1GB instructions (Intel Haswell, AMD Excavator or equivalent)
+  - CPU that supports AVX2, RDRAND and PDPE1GB instructions (Intel Haswell, AMD Excavator or equivalent)
   - LoadBalancer with 1 available address for the UPF
   - Multus CNI enabled
 - Juju >= 3.1/stable
@@ -14,12 +14,15 @@ the `sdcore-user-plane` Juju bundle.
 - Juju model created, named `user-plane`
 
 ## Enable HugePages on the host
-As `root` user, edit the bootloader of the OS appending the following command to the
-kernel command-line parameter:
+As `root` user, edit the bootloader configuration of the OS (`/etc/default/grub`) appending the following command to the
+kernel command-line parameters (`GRUB_CMDLINE_LINUX_DEFAULT`):
 ```console
 default_hugepagesz=1G
 ```
-Then update the bootloader.
+Then update the bootloader:
+```shell
+update-grub
+```
 
 Allocate 2 HugePages of 1Gi, for a total of 2Gi HugePages, and make it persistent:
 ```shell
