@@ -37,7 +37,7 @@ range that has at least 3 IP addresses for Charmed 5G.
 ```console
 sudo microk8s enable hostpath-storage
 sudo microk8s enable multus
-sudo microk8s enable metallb:10.0.0.3-10.0.0.3
+sudo microk8s enable metallb:10.0.0.2-10.0.0.4
 ```
 
 ## 2. Bootstrap a Juju controller
@@ -159,6 +159,8 @@ Add the following line to your `/etc/hosts` file:
 echo '10.0.0.3  mynetwork.com' | sudo tee --append /etc/hosts
 ```
 
+Here, replace `10.0.0.3` with the Application IP address of the `traefik-k8s` application. You can find it by running `juju status traefik-k8s`.
+
 Retrieve the NMS address:
 
 ```console
@@ -168,16 +170,17 @@ juju run traefik-k8s/0 show-proxied-endpoints
 The output should be `http://core-nms.mynetwork.com/`. Navigate to this address in your browser.
 
 
-## 6. Configure the 5G core network
+## 6. Configure the 5G core network through the Network Management System
 
-Create a network slice with the following attributes:
+In the Network Management System (NMS), create a device group with the following attributes:
+
 - Name: `default`
 - MCC: `208`
 - MNC: `93`
 - UPF: `upf-external.core.svc.cluster.local:8805`
 - gNodeB: `core-gnbsim-gnbsim`
 
-You should see the network slice created in the NMS UI:
+You should see the following network slice created:
 
 ```{image} ../images/nms_network_slice.png
 :alt: NMS Network Slice
@@ -192,7 +195,7 @@ Create a subscriber with the following attributes:
 - Network Slice: `default`
 - Device Group: `default`
 
-You should see the sbuscriber created in the NMS UI:
+You should see the following subscriber created:
 
 ```{image} ../images/nms_subscriber.png
 :alt: NMS Subscriber
