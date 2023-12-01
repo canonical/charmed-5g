@@ -26,7 +26,6 @@ update-grub
 
 Allocate 2 HugePages of 1Gi, for a total of 2Gi HugePages, and make it persistent:
 ```shell
-echo 2 | tee /proc/sys/vm/nr_hugepages
 echo "vm.nr_hugepages=2" | tee /etc/sysctl.d/hugepages.conf
 ```
 Then reboot the host.
