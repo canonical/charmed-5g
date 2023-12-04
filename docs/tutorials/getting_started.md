@@ -89,150 +89,48 @@ deployment by running `juju status`. The core network is ready when all the char
 ```console
 ubuntu@host:~$ juju status
 Model  Controller          Cloud/Region        Version  SLA          Timestamp
-core   microk8s-localhost  microk8s/localhost  3.1.2    unsupported  11:55:31-04:00
+core   microk8s-localhost  microk8s/localhost  3.1.6    unsupported  12:58:34-05:00
 
-App                Version  Status   Scale  Charm              Channel        Rev  Address         Exposed  Message
-amf                         active       1  sdcore-amf         edge             6  10.152.183.187  no
-ausf                        active       1  sdcore-ausf        edge             3  10.152.183.205  no
-grafana-agent-k8s  0.26.1   waiting      1  grafana-agent-k8s  latest/stable   24  10.152.183.196  no       installing agent
-mongodb-k8s                 active       1  mongodb-k8s        5/edge          29  10.152.183.194  no
-nrf                         active       1  sdcore-nrf         edge            18  10.152.183.121  no
-nssf                        active       1  sdcore-nssf        edge             4  10.152.183.177  no
-pcf                         active       1  sdcore-pcf         edge             2  10.152.183.139  no
-router                      active       1  sdcore-router      edge             1  10.152.183.250  no
-smf                         active       1  sdcore-smf         edge             3  10.152.183.239  no
-udm                         active       1  sdcore-udm         edge             2  10.152.183.254  no
-udr                         active       1  sdcore-udr         edge             5  10.152.183.200  no
-upf                         active       1  sdcore-upf         edge             7  10.152.183.32   no
-webui                       active       1  sdcore-webui       edge             5  10.152.183.128  no
+App                       Version  Status   Scale  Charm                     Channel        Rev  Address         Exposed  Message
+amf                                active       1  sdcore-amf                edge            57  10.152.183.208  no       
+ausf                               active       1  sdcore-ausf               edge            40  10.152.183.237  no       
+gnbsim                             active       1  sdcore-gnbsim             edge            43  10.152.183.167  no       
+grafana-agent-k8s         0.32.1   waiting      1  grafana-agent-k8s         latest/stable   44  10.152.183.245  no       installing agent
+mongodb-k8s                        active       1  mongodb-k8s               5/edge          36  10.152.183.156  no       Primary
+nms                                active       1  sdcore-nms                edge            26  10.152.183.121  no       
+nrf                                active       1  sdcore-nrf                edge            62  10.152.183.123  no       
+nssf                               active       1  sdcore-nssf               edge            37  10.152.183.165  no       
+pcf                                active       1  sdcore-pcf                edge            32  10.152.183.205  no       
+router                             active       1  sdcore-router             edge            33  10.152.183.49   no       
+self-signed-certificates           active       1  self-signed-certificates  beta            33  10.152.183.153  no       
+smf                                active       1  sdcore-smf                edge            37  10.152.183.147  no       
+traefik-k8s               2.10.4   active       1  traefik-k8s               latest/stable  148  10.0.0.3        no       
+udm                                active       1  sdcore-udm                edge            35  10.152.183.168  no       
+udr                                active       1  sdcore-udr                edge            31  10.152.183.96   no       
+upf                                active       1  sdcore-upf                edge            64  10.152.183.126  no       
+webui                              active       1  sdcore-webui              edge            23  10.152.183.128  no       
 
-Unit                  Workload  Agent  Address      Ports  Message
-amf/0*                active    idle   10.1.19.135
-ausf/0*               active    idle   10.1.19.136
-grafana-agent-k8s/0*  waiting   idle   10.1.19.131         no related Prometheus remote-write
-mongodb-k8s/0*        active    idle   10.1.19.139
-nrf/0*                active    idle   10.1.19.190
-nssf/0*               active    idle   10.1.19.167
-pcf/0*                active    idle   10.1.19.130
-router/0*             active    idle   10.1.19.132
-smf/0*                active    idle   10.1.19.137
-udm/0*                active    idle   10.1.19.142
-udr/0*                active    idle   10.1.19.154
-upf/0*                active    idle   10.1.19.147
-webui/0*              active    idle   10.1.19.189
+Unit                         Workload  Agent  Address      Ports  Message
+amf/0*                       active    idle   10.1.182.23         
+ausf/0*                      active    idle   10.1.182.18         
+gnbsim/0*                    active    idle   10.1.182.50         
+grafana-agent-k8s/0*         blocked   idle   10.1.182.51         logging-consumer: off, grafana-cloud-config: off
+mongodb-k8s/0*               active    idle   10.1.182.35         Primary
+nms/0*                       active    idle   10.1.182.2          
+nrf/0*                       active    idle   10.1.182.53         
+nssf/0*                      active    idle   10.1.182.48         
+pcf/0*                       active    idle   10.1.182.46         
+router/0*                    active    idle   10.1.182.57         
+self-signed-certificates/0*  active    idle   10.1.182.56         
+smf/0*                       active    idle   10.1.182.27         
+traefik-k8s/0*               active    idle   10.1.182.40         
+udm/0*                       active    idle   10.1.182.52         
+udr/0*                       active    idle   10.1.182.39         
+upf/0*                       active    idle   10.1.182.60         
+webui/0*                     active    idle   10.1.182.33 
 ```
 
-## 4. Configure SD-Core
-
-Configuring the 5G core network is done making HTTP requests to the `webui` service. Here we will 
-create a subscriber, a device group and a network slice.
-
-Run `juju status` and note the IP address next to the `webui` unit.
-
-```console
-ubuntu@host:~$ juju status
-Model  Controller          Cloud/Region        Version  SLA          Timestamp
-core   microk8s-localhost  microk8s/localhost  3.1.2    unsupported  11:55:31-04:00
-
-App                Version  Status   Scale  Charm              Channel        Rev  Address         Exposed  Message
-[...]      
-webui                       active       1  sdcore-webui       edge             5  10.152.183.128  no       
-
-Unit                  Workload  Agent  Address      Ports  Message
-[...]        
-webui/0*              active    idle   10.1.19.189 
-```
-
-```{note}
-Here the address is `10.1.19.189`, yours will likely be different. Make sure to replace it in
-the next command.
-```
-
-Export your `webui` IP address to a variable:
-
-```console
-export WEBUI_IP="10.1.19.189"
-```
-
-Create a new subscriber:
-
-```console
-curl -v ${WEBUI_IP}:5000/api/subscriber/imsi-208930100007487 \
---header 'Content-Type: text/plain' \
---data '{
-    "UeId":"208930100007487",
-    "opc":"981d464c7c52eb6e5036234984ad0bcf",
-    "key":"5122250214c33e723a5dd523fc145fc0",
-    "sequenceNumber":"16f3b3f70fc2"
-}'
-```
-
-Create a new device group named "cows" that contains the newly created subscriber:
-
-```console
-curl -v ${WEBUI_IP}:5000/config/v1/device-group/cows \
---header 'Content-Type: application/json' \
---data '{
-    "imsis": [
-        "208930100007487"
-    ],
-    "site-info": "demo",
-    "ip-domain-name": "pool1",
-    "ip-domain-expanded": {
-        "dnn": "internet",
-        "ue-ip-pool": "172.250.1.0/16",
-        "dns-primary": "8.8.8.8",
-        "mtu": 1460,
-        "ue-dnn-qos": {
-            "dnn-mbr-uplink": 20000000,
-            "dnn-mbr-downlink": 200000000,
-            "bitrate-unit": "bps",
-            "traffic-class": {
-                "name": "platinum",
-                "arp": 6,
-                "pdb": 300,
-                "pelr": 6,
-                "qci": 8
-            }
-        }
-    }
-}'
-```
-
-Create a network slice called "default" that contains the "cows" device group:
-
-```console
-curl -v ${WEBUI_IP}:5000/config/v1/network-slice/default \
---header 'Content-Type: application/json' \
---data '{
-  "slice-id": {
-    "sst": "1",
-    "sd": "010203"
-  },
-  "site-device-group": [
-    "cows"
-  ],
-  "site-info": {
-    "site-name": "demo",
-    "plmn": {
-      "mcc": "208",
-      "mnc": "93"
-    },
-    "gNodeBs": [
-      {
-        "name": "demo-gnb1",
-        "tac": 1
-      }
-    ],
-    "upf": {
-      "upf-name": "upf-external",
-      "upf-port": "8805"
-    }
-  }
-}'
-```
-
-## 5. Run the 5G simulation
+## 4. Deploy the 5G simulator
 
 Deploy the `sdcore-gnbsim` operator
 
@@ -240,11 +138,71 @@ Deploy the `sdcore-gnbsim` operator
 juju deploy sdcore-gnbsim gnbsim --trust --channel=edge
 ```
 
-Integrate it to the AMF:
+Integrate it to the AMF and the NMS:
 
 ```console
 juju integrate gnbsim:fiveg-n2 amf:fiveg-n2
+juju integrate gnbsim:fiveg_gnb_identity nms:fiveg_gnb_identity
 ```
+
+## 5. Configure the ingress
+
+Configure Traefik to use an external hostname:
+
+```console
+juju config traefik-k8s external_hostname=mynetwork.com
+```
+
+Add the following line to your `/etc/hosts` file:
+
+```console
+echo '10.0.0.3  mynetwork.com' | sudo tee --append /etc/hosts
+```
+
+Here, replace `10.0.0.3` with the Application IP address of the `traefik-k8s` application. You can find it by running `juju status traefik-k8s`.
+
+Retrieve the NMS address:
+
+```console
+juju run traefik-k8s/0 show-proxied-endpoints
+```
+
+The output should be `http://core-nms.mynetwork.com/`. Navigate to this address in your browser.
+
+
+## 6. Configure the 5G core network through the Network Management System
+
+In the Network Management System (NMS), create a device group with the following attributes:
+
+- Name: `default`
+- MCC: `208`
+- MNC: `93`
+- UPF: `upf-external.core.svc.cluster.local:8805`
+- gNodeB: `core-gnbsim-gnbsim`
+
+You should see the following network slice created:
+
+```{image} ../images/nms_network_slice.png
+:alt: NMS Network Slice
+:align: center
+```
+
+Create a subscriber with the following attributes:
+- IMSI: `208930100007487`
+- OPC: `981d464c7c52eb6e5036234984ad0bcf`
+- Key: `5122250214c33e723a5dd523fc145fc0`
+- Sequence Number: `16f3b3f70fc2`
+- Network Slice: `default`
+- Device Group: `default`
+
+You should see the following subscriber created:
+
+```{image} ../images/nms_subscriber.png
+:alt: NMS Subscriber
+:align: center
+```
+
+## 7. Run the 5G simulation
 
 Run the simulation
 
@@ -265,7 +223,7 @@ info: run juju debug-log to get more information.
 success: "true"
 ```
 
-## 6. Destroy the environment
+## 8. Destroy the environment
 
 Destroy the Juju controller and all its models
 
