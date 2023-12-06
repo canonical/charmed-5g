@@ -150,7 +150,7 @@ juju integrate gnbsim:fiveg_gnb_identity nms:fiveg_gnb_identity
 Configure Traefik to use an external hostname:
 
 ```console
-juju config traefik-k8s external_hostname=10.0.0.2.nip.io
+juju config traefik-k8s external_hostname=10.0.0.3.nip.io
 ```
 
 Here, replace `10.0.0.3` with the Application IP address of the `traefik-k8s` application. You can find it by running `juju status traefik-k8s`.
