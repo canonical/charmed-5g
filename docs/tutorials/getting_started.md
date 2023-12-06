@@ -193,7 +193,7 @@ Create a subscriber with the following attributes:
 - Key: `5122250214c33e723a5dd523fc145fc0`
 - Sequence Number: `16f3b3f70fc2`
 - Network Slice: `default`
-- Device Group: `default`
+- Device Group: `default-default`
 
 You should see the following subscriber created:
 
