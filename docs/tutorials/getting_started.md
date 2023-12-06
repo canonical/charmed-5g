@@ -172,7 +172,7 @@ The output should be `http://core-nms.mynetwork.com/`. Navigate to this address 
 
 ## 6. Configure the 5G core network through the Network Management System
 
-In the Network Management System (NMS), create a device group with the following attributes:
+In the Network Management System (NMS), create a network slice with the following attributes:
 
 - Name: `default`
 - MCC: `208`
