@@ -150,13 +150,7 @@ juju integrate gnbsim:fiveg_gnb_identity nms:fiveg_gnb_identity
 Configure Traefik to use an external hostname:
 
 ```console
-juju config traefik-k8s external_hostname=mynetwork.com
-```
-
-Add the following line to your `/etc/hosts` file:
-
-```console
-echo '10.0.0.3  mynetwork.com' | sudo tee --append /etc/hosts
+juju config traefik-k8s external_hostname=10.0.0.3.nip.io
 ```
 
 Here, replace `10.0.0.3` with the Application IP address of the `traefik-k8s` application. You can find it by running `juju status traefik-k8s`.
@@ -167,7 +161,7 @@ Retrieve the NMS address:
 juju run traefik-k8s/0 show-proxied-endpoints
 ```
 
-The output should be `http://core-nms.mynetwork.com/`. Navigate to this address in your browser.
+The output should be `http://core-nms.10.0.0.3.nip.io/`. Navigate to this address in your browser.
 
 
 ## 6. Configure the 5G core network through the Network Management System
