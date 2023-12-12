@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- One of the `sdcore` bundles deployed in a Juju model
+- One of the `sdcore-k8s` bundles deployed in a Juju model
 
 ## Deploy the `cos-lite` bundle
 
