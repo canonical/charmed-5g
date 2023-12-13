@@ -43,10 +43,10 @@ applications:
 EOF
 ```
 
-Deploy the `sdcore-user-plane` bundle.
+Deploy the `sdcore-user-plane-k8s` bundle.
 
 ```console
-juju deploy sdcore-user-plane --trust --channel=edge --overlay upf-overlay.yaml
+juju deploy sdcore-user-plane-k8s --trust --channel=edge --overlay upf-overlay.yaml
 ```
 
 ## Validate HugePages support
