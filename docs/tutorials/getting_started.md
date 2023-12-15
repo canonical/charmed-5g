@@ -55,8 +55,8 @@ juju bootstrap microk8s
 ```
 
 ```{note}
-There is a [bug](https://bugs.launchpad.net/juju/+bug/1988355) in Juju that occurs when 
-bootstrapping a controller on a new machine. If you encounter it, create the following 
+There is a [bug](https://bugs.launchpad.net/juju/+bug/1988355) in Juju that occurs when
+bootstrapping a controller on a new machine. If you encounter it, create the following
 directory:
 `mkdir -p /home/ubuntu/.local/share`
 ```
@@ -70,7 +70,6 @@ Create a Juju model named `core`:
 juju add-model core
 ```
 
-<<<<<<< HEAD
 Deploy the `sdcore-router-k8s` operator:
 
 ```console
@@ -81,18 +80,6 @@ Deploy the `sdcore-k8s` charm bundle:
 
 ```console
 juju deploy sdcore-k8s --trust --channel=edge
-=======
-Deploy the `sdcore-router` operator:
-
-```console
-juju deploy sdcore-router router --trust --channel=edge
-```
-
-Deploy the `sdcore` charm bundle:
-
-```console
-juju deploy sdcore --trust --channel=edge
->>>>>>> a7cf061 (Initial draft)
 ```
 
 Deploying the core network can take up to 15 minutes. You can validate the status of the
@@ -105,77 +92,50 @@ Model  Controller          Cloud/Region        Version  SLA          Timestamp
 core   microk8s-localhost  microk8s/localhost  3.1.6    unsupported  12:58:34-05:00
 
 App                       Version  Status   Scale  Charm                     Channel        Rev  Address         Exposed  Message
-<<<<<<< HEAD
-amf                                active       1  sdcore-amf-k8s                edge            57  10.152.183.208  no       
-ausf                               active       1  sdcore-ausf-k8s               edge            40  10.152.183.237  no       
-gnbsim                             active       1  sdcore-gnbsim-k8s             edge            43  10.152.183.167  no       
+amf                                active       1  sdcore-amf-k8s                edge            57  10.152.183.208  no
+ausf                               active       1  sdcore-ausf-k8s               edge            40  10.152.183.237  no
+gnbsim                             active       1  sdcore-gnbsim-k8s             edge            43  10.152.183.167  no
 grafana-agent-k8s         0.32.1   waiting      1  grafana-agent-k8s             latest/stable   44  10.152.183.245  no       installing agent
 mongodb-k8s                        active       1  mongodb-k8s                   5/edge          36  10.152.183.156  no       Primary
-nms                                active       1  sdcore-nms-k8s                edge            26  10.152.183.121  no       
-nrf                                active       1  sdcore-nrf-k8s                edge            62  10.152.183.123  no       
-nssf                               active       1  sdcore-nssf-k8s               edge            37  10.152.183.165  no       
-pcf                                active       1  sdcore-pcf-k8s                edge            32  10.152.183.205  no       
-router                             active       1  sdcore-router-k8s             edge            33  10.152.183.49   no       
-self-signed-certificates           active       1  self-signed-certificates      beta            33  10.152.183.153  no       
-smf                                active       1  sdcore-smf-k8s                edge            37  10.152.183.147  no       
-traefik-k8s               2.10.4   active       1  traefik-k8s                   latest/stable  148  10.0.0.3        no       
-udm                                active       1  sdcore-udm-k8s                edge            35  10.152.183.168  no       
-udr                                active       1  sdcore-udr-k8s                edge            31  10.152.183.96   no       
-upf                                active       1  sdcore-upf-k8s                edge            64  10.152.183.126  no       
-webui                              active       1  sdcore-webui-k8s              edge            23  10.152.183.128  no       
-=======
-amf                                active       1  sdcore-amf                edge            57  10.152.183.208  no       
-ausf                               active       1  sdcore-ausf               edge            40  10.152.183.237  no       
-gnbsim                             active       1  sdcore-gnbsim             edge            43  10.152.183.167  no       
-grafana-agent-k8s         0.32.1   waiting      1  grafana-agent-k8s         latest/stable   44  10.152.183.245  no       installing agent
-mongodb-k8s                        active       1  mongodb-k8s               5/edge          36  10.152.183.156  no       Primary
-nms                                active       1  sdcore-nms                edge            26  10.152.183.121  no       
-nrf                                active       1  sdcore-nrf                edge            62  10.152.183.123  no       
-nssf                               active       1  sdcore-nssf               edge            37  10.152.183.165  no       
-pcf                                active       1  sdcore-pcf                edge            32  10.152.183.205  no       
-router                             active       1  sdcore-router             edge            33  10.152.183.49   no       
-self-signed-certificates           active       1  self-signed-certificates  beta            33  10.152.183.153  no       
-smf                                active       1  sdcore-smf                edge            37  10.152.183.147  no       
-traefik-k8s               2.10.4   active       1  traefik-k8s               latest/stable  148  10.0.0.3        no       
-udm                                active       1  sdcore-udm                edge            35  10.152.183.168  no       
-udr                                active       1  sdcore-udr                edge            31  10.152.183.96   no       
-upf                                active       1  sdcore-upf                edge            64  10.152.183.126  no       
-webui                              active       1  sdcore-webui              edge            23  10.152.183.128  no       
->>>>>>> a7cf061 (Initial draft)
+nms                                active       1  sdcore-nms-k8s                edge            26  10.152.183.121  no
+nrf                                active       1  sdcore-nrf-k8s                edge            62  10.152.183.123  no
+nssf                               active       1  sdcore-nssf-k8s               edge            37  10.152.183.165  no
+pcf                                active       1  sdcore-pcf-k8s                edge            32  10.152.183.205  no
+router                             active       1  sdcore-router-k8s             edge            33  10.152.183.49   no
+self-signed-certificates           active       1  self-signed-certificates      beta            33  10.152.183.153  no
+smf                                active       1  sdcore-smf-k8s                edge            37  10.152.183.147  no
+traefik-k8s               2.10.4   active       1  traefik-k8s                   latest/stable  148  10.0.0.3        no
+udm                                active       1  sdcore-udm-k8s                edge            35  10.152.183.168  no
+udr                                active       1  sdcore-udr-k8s                edge            31  10.152.183.96   no
+upf                                active       1  sdcore-upf-k8s                edge            64  10.152.183.126  no
+webui                              active       1  sdcore-webui-k8s              edge            23  10.152.183.128  no
 
 Unit                         Workload  Agent  Address      Ports  Message
-amf/0*                       active    idle   10.1.182.23         
-ausf/0*                      active    idle   10.1.182.18         
-gnbsim/0*                    active    idle   10.1.182.50         
+amf/0*                       active    idle   10.1.182.23
+ausf/0*                      active    idle   10.1.182.18
+gnbsim/0*                    active    idle   10.1.182.50
 grafana-agent-k8s/0*         blocked   idle   10.1.182.51         logging-consumer: off, grafana-cloud-config: off
 mongodb-k8s/0*               active    idle   10.1.182.35         Primary
-nms/0*                       active    idle   10.1.182.2          
-nrf/0*                       active    idle   10.1.182.53         
-nssf/0*                      active    idle   10.1.182.48         
-pcf/0*                       active    idle   10.1.182.46         
-router/0*                    active    idle   10.1.182.57         
-self-signed-certificates/0*  active    idle   10.1.182.56         
-smf/0*                       active    idle   10.1.182.27         
-traefik-k8s/0*               active    idle   10.1.182.40         
-udm/0*                       active    idle   10.1.182.52         
-udr/0*                       active    idle   10.1.182.39         
-upf/0*                       active    idle   10.1.182.60         
-webui/0*                     active    idle   10.1.182.33 
+nms/0*                       active    idle   10.1.182.2
+nrf/0*                       active    idle   10.1.182.53
+nssf/0*                      active    idle   10.1.182.48
+pcf/0*                       active    idle   10.1.182.46
+router/0*                    active    idle   10.1.182.57
+self-signed-certificates/0*  active    idle   10.1.182.56
+smf/0*                       active    idle   10.1.182.27
+traefik-k8s/0*               active    idle   10.1.182.40
+udm/0*                       active    idle   10.1.182.52
+udr/0*                       active    idle   10.1.182.39
+upf/0*                       active    idle   10.1.182.60
+webui/0*                     active    idle   10.1.182.33
 ```
 
 ## 4. Deploy the 5G simulator
 
-<<<<<<< HEAD
 Deploy the `sdcore-gnbsim-k8s` operator
 
 ```console
 juju deploy sdcore-gnbsim-k8s gnbsim --trust --channel=edge
-=======
-Deploy the `sdcore-gnbsim` operator
-
-```console
-juju deploy sdcore-gnbsim gnbsim --trust --channel=edge
->>>>>>> a7cf061 (Initial draft)
 ```
 
 Integrate it to the AMF and the NMS:

@@ -7,7 +7,7 @@ This guide covers how to install and configure the SD-Core gNB Simulator.
 - Juju >= 3.1
 - A Juju controller has been bootstrapped
 - A Kubernetes cluster configured with Multus
-- 1 Juju cloud for the Kubernetes cluster has been added 
+- 1 Juju cloud for the Kubernetes cluster has been added
 
 ## Deploy gNB Simulator
 
@@ -17,17 +17,10 @@ Create a Juju model.
 juju add-model gnbsim gnbsim-cloud
 ```
 
-<<<<<<< HEAD
 Deploy the `sdcore-gnbsim-k8s` operator charm.
 
 ```console
 juju deploy sdcore-gnbsim-k8s gnbsim --trust --channel=edge \
-=======
-Deploy the `sdcore-gnbsim` operator charm.
-
-```console
-juju deploy sdcore-gnbsim gnbsim --trust --channel=edge \
->>>>>>> a7cf061 (Initial draft)
   --config gnb-interface=ran \
   --config gnb-ip-address=10.204.0.10/24 \
   --config icmp-packet-destination=8.8.8.8 \

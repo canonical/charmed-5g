@@ -37,9 +37,5 @@ For example, if you deployed the complete SD-Core bundle, you would use the
 following command:
 
 ```bash
-<<<<<<< HEAD
 juju deploy sdcore-k8s --trust --channel=edge
-=======
-juju deploy sdcore --trust --channel=edge
->>>>>>> a7cf061 (Initial draft)
 ```

@@ -36,14 +36,10 @@ juju add-model control-plane control-plane-cloud
 
 Deploy the control plane bundle.
 ```console
-<<<<<<< HEAD
 juju deploy sdcore-control-plane-k8s --trust --channel=edge --overlay control-plane-overlay.yaml
-=======
-juju deploy sdcore-control-plane --trust --channel=edge --overlay control-plane-overlay.yaml
->>>>>>> a7cf061 (Initial draft)
 ```
 
-Expose the integration offer for the AMF N2 interface. 
+Expose the integration offer for the AMF N2 interface.
 
 ```console
 juju offer control-plane.amf:fiveg-n2
@@ -77,9 +73,5 @@ juju add-model user-plane user-plane-cloud
 Deploy the user plane bundle.
 
 ```console
-<<<<<<< HEAD
 juju deploy sdcore-user-plane-k8s --trust --channel=edge --overlay upf-overlay.yaml
-=======
-juju deploy sdcore-user-plane --trust --channel=edge --overlay upf-overlay.yaml
->>>>>>> a7cf061 (Initial draft)
 ```
