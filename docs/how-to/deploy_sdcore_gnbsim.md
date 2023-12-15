@@ -7,7 +7,7 @@ This guide covers how to install and configure the SD-Core gNB Simulator.
 - Juju >= 3.1
 - A Juju controller has been bootstrapped
 - A Kubernetes cluster configured with Multus
-- 1 Juju cloud for the Kubernetes cluster has been added 
+- 1 Juju cloud for the Kubernetes cluster has been added
 
 ## Deploy gNB Simulator
 
