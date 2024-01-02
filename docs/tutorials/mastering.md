@@ -1,27 +1,15 @@
 # Mastering
 
-In this tutorial, we will deploy and run the SD-Core 5G core network following Control and User Plane Separation (CUPS) principles. The radio and cell phone simulator will also be deployed on an isolated cluster.
+In this tutorial, we will deploy and run the SD-Core 5G core network in a single server following Control and User Plane Separation (CUPS) principles. The radio and cell phone simulator will also be deployed on an isolated cluster. [Multipass](https://multipass.run/) is used to create separate VMs connected with [LXD](https://ubuntu.com/lxd) networking.
 
-```{image} ../images/sdcore_networking.png
-:alt: Network diagram
-:align: center
-```
+## 1. Prepare Host
 
-To complete this tutorial, you will need four machines (virtual or physical), with access to the networks as follows.
-
-| Machine | CPUs | RAM | Disk | Networks |
-| ------- | ---- | --- | ---- | -------- |
-| Control Plane Kubernetes Cluster     | 4 | 8g | 40g | `management` |
-| User Plane Kubernetes Cluster        | 4 | 4g | 20g | `management`, `access`, `core` |
-| Juju Controller + Kubernetes Cluster | 2 | 8g | 40g | `management` |
-| gNB Simulator Kubernetes  Cluster    | 4 | 4g | 20g | `management`, `ran` |
-
-
-## Sample Values
-
-For the purpose of this guide, the following values will be used.
-
+This tutorial requires:
+- Ubuntu OS is running on host (preferably 22.04 or higher)
+- It has at least one NIC connected to internet 
 ### Networks
+
+The following networks will be used to create test  environment.
 
 | Name | Subnet | Gateway IP |
 | ---- | ------ | ---------- |
@@ -30,31 +18,560 @@ For the purpose of this guide, the following values will be used.
 | `core`       | 10.203.0.0/24 | 10.203.0.1 |
 | `ran`        | 10.204.0.0/24 | 10.204.0.1 |
 
+
+Create local network bridges to be used by LXD by adding the below config under `/etc/netplan/config.yaml`. `enp4s0` is the sample interface used in this tutorial and replace it with a proper interface name according to your environment.
+
+```yaml
+# /etc/netplan/config.yaml
+network:
+  ethernets:
+    enp4s0:
+      dhcp4: no
+      dhcp6: no
+  bridges:
+    mgmt-br:
+      addresses:
+        - 10.201.0.14/24
+      routes:
+        - to: default
+          via: 10.201.0.1
+          metric: 110
+      interfaces:
+        - vlan201
+    access-br:
+      addresses:
+        - 10.202.0.14/24
+      routes:
+        - to: 10.204.0.0/24
+          via: 10.202.0.1
+      interfaces:
+        - vlan202
+    core-br:
+      addresses:
+        - 10.203.0.14/24
+      routes:
+        - to: default
+          via: 10.203.0.1
+          metric: 203
+      interfaces:
+        - vlan203
+    ran-br:
+      addresses:
+        - 10.204.0.14/24
+      routes:
+        - to: 10.202.0.0/24
+          via: 10.204.0.1
+      interfaces:
+        - vlan204
+
+  vlans:
+    vlan201:
+      id: 201
+      link: enp4s0
+    vlan202:
+      id: 202
+      link: enp4s0
+    vlan203:
+      id: 203
+      link: enp4s0
+    vlan204:
+      id: 204
+      link: enp4s0
+
+  version: 2
+```
+
+```bash
+sudo netplan apply
+```
+
+### Install and Configure LXD
+
+Install LXD:
+```console
+$ sudo snap install lxd
+```
+Pay attention while setting the size of new loop device and local network bridge. 
+- Loop device size should be enough to launch all VMs
+- New lxd bridge should not be created.
+
+Use default settings for other configurations.
+```console
+$ lxd init
+Would you like to use LXD clustering? (yes/no) [default=no]: 
+Do you want to configure a new storage pool? (yes/no) [default=yes]: 
+Name of the new storage pool [default=default]: 
+Name of the storage backend to use (dir, lvm, zfs, btrfs, ceph) [default=zfs]: 
+Create a new ZFS pool? (yes/no) [default=yes]: 
+Would you like to use an existing empty block device (e.g. a disk or partition)? (yes/no) [default=no]: 
+Size in GiB of the new loop device (1GiB minimum) [default=30GiB]: 165GiB
+Would you like to connect to a MAAS server? (yes/no) [default=no]: 
+Would you like to create a new local network bridge? (yes/no) [default=yes]: no
+What IPv4 address should be used? (CIDR subnet notation, “auto” or “none”) [default=auto]: 
+What IPv6 address should be used? (CIDR subnet notation, “auto” or “none”) [default=auto]: 
+Would you like the LXD server to be available over the network? (yes/no) [default=no]: 
+Would you like stale cached images to be updated automatically? (yes/no) [default=yes]: 
+Would you like a YAML "lxd init" preseed to be printed? (yes/no) [default=no]: 
+```
+
+### Install and configure Multipass
+
+Install Multipass and set LXD as local driver:
+
+```console
+$ sudo snap install multipass
+$ sudo multipass set local.driver=lxd
+```
+Wait a few seconds if you get the output: `set failed: cannot connect to the multipass socket` and retry to set local driver again.
+
+Check if local driver is set to lxd properly.
+```console
+$ sudo multipass get local.driver
+lxd
+```
+
+Connect multipass to LXD.
+```console
+$ sudo snap connect multipass:lxd lxd
+```
+
+Check multipass connections:
+```console
+$ sudo snap connections multipass
+```
+
+Set Multipass passphrase and authenticate:
+```console
+$ sudo multipass set local.passphrase
+Please enter passphrase: <your_passhrase>
+Please re-enter passphrase: <your_passhraseo> 
+
+$ multipass authenticate
+Please enter passphrase: <your_passhrase>
+```
+
+## 2. Create VMs 
+
+To complete this tutorial, you will need seven virtual machines with access to the networks as follows.
+
+| Machine                              | CPUs | RAM | Disk | Networks                       |
+|--------------------------------------|------|-----|------|--------------------------------|
+| DNS Server                           | 1    | 1g  | 15g  | `management`                   |
+| Control Plane Kubernetes Cluster     | 4    | 8g  | 40g  | `management`                   |
+| User Plane Kubernetes Cluster        | 4    | 4g  | 20g  | `management`, `access`, `core` |
+| Juju Controller + Kubernetes Cluster | 2    | 6g  | 40g  | `management`                   |
+| gNB Simulator Kubernetes Cluster     | 2    | 4g  | 20g  | `management`, `ran`            |
+| RAN Access Router                    | 1    | 1g  | 15g  | `management`, `ran` , `access` |
+| Core Router                          | 1    | 1g  | 15g  | `management`, `core`           |
+
+
+Create VMs with Multipass:
+
+```console
+$ multipass launch -c 1 -m 1G -d 15G -n dns --network mgmt-br jammy
+$ multipass launch -c 4 -m 8G -d 40G -n control-plane --network mgmt-br jammy
+$ multipass launch -c 4 -m 4G -d 20G -n user-plane  --network mgmt-br --network core-br --network access-br jammy
+$ multipass launch -c 4 -m 6G -d 40G -n juju-controller --network mgmt-br jammy
+$ multipass launch -c 2 -m 4G -d 20G -n gnbsim --network mgmt-br --network ran-br jammy
+$ multipass launch -c 1 -m 1G -d 15G -n ran-access-router  --network mgmt-br --network ran-br --network access-br jammy
+$ multipass launch -c 1 -m 1G -d 15G -n core-router --network mgmt-br --network core-br jammy
+```
+
+Wait till all VMs become `Running` status.
+
+```console
+Name                    State             IPv4             Image
+juju-controller         Running           10.231.204.5     Ubuntu 22.04 LTS
+                                          10.201.0.104
+                                          10.1.49.0
+core-router             Running           10.231.204.200   Ubuntu 22.04 LTS
+                                          10.201.0.114
+                                          10.203.0.1
+control-plane           Running           10.231.204.202   Ubuntu 22.04 LTS
+                                          10.201.0.101
+                                          10.1.9.0
+dns                     Running           10.231.204.96    Ubuntu 22.04 LTS
+                                          10.201.0.100
+gnbsim                  Running           10.231.204.24    Ubuntu 22.04 LTS
+                                          10.201.0.103
+                                          10.204.0.100
+                                          10.1.143.192
+ran-access-router       Running           10.231.204.220   Ubuntu 22.04 LTS
+                                          10.201.0.110
+                                          10.204.0.1
+                                          10.202.0.1
+user-plane              Running           10.231.204.121   Ubuntu 22.04 LTS
+                                          10.201.0.102
+                                          10.203.0.100
+                                          10.202.0.100
+                                          10.1.112.128
+```
+
 ### IP Addresses
 
 The following IP addresses are used in this tutorial and must be present in the DNS Server that all hosts are using.
 
-| Name | IP Address | Purpose |
-| ---- | ---------- | ------- |
-| `juju-controller.mgmt` | 10.201.0.10 | Management address for Juju machine |
-| `control-plane.mgmt` | 10.201.0.11 | Management address for control plane cluster machine |
-| `user-plane.mgmt` | 10.201.0.12 | Management address for user plane cluster machine |
-| `gnbsim.mgmt` | 10.201.0.13 | Management address for the gNB Simulator cluster machine |
-| `api.juju-controller.mgmt` | 10.201.0.50 | Juju controller address |
-| `cos.mgmt` | 10.201.0.51 | Canonical Observability Stack address |
-| `amf.mgmt` | 10.201.0.100 | Externally reachable control plane endpoint for the AMF |
-| `control-plane-nms.control-plane.mgmt` | 10.201.0.101 | Externally reachable control plane endpoint for the NMS |
+| Name | IP Address   | Purpose |
+| ---- |--------------| ------- |
+| `juju-controller.mgmt` | 10.201.0.104 | Management address for Juju machine |
+| `control-plane.mgmt` | 10.201.0.101 | Management address for control plane cluster machine |
+| `user-plane.mgmt` | 10.201.0.102 | Management address for user plane cluster machine |
+| `gnbsim.mgmt` | 10.201.0.103 | Management address for the gNB Simulator cluster machine |
+| `api.juju-controller.mgmt` | 10.201.0.50  | Juju controller address |
+| `cos.mgmt` | 10.201.0.51  | Canonical Observability Stack address |
+| `amf.mgmt` | 10.201.0.52  | Externally reachable control plane endpoint for the AMF |
+| `control-plane-nms.control-plane.mgmt` | 10.201.0.53  | Externally reachable control plane endpoint for the NMS |
 | `upf.mgmt` | 10.201.0.200 | Externally reachable control plane endpoint for the UPF |
 
-## 1. Bootstrap all Machines
 
-This section covers how to install Juju and MicroK8s to act as the infrastructure for SD-Core.
+### Install DNS Server
 
-### SD-Core Control Plane
+First, replace the content of `/etc/netplan/50-cloud-init.yaml` as following to configure mgmt interface ip address as `10.201.0.100`.
 
-All commands in this section are run on the SD-Core Control Plane Kubernetes cluster host.
+```yaml
+network:
+    ethernets:
+        enp5s0:
+            dhcp4: true
+        enp6s0:
+            dhcp4: false
+            addresses:
+              - 10.201.0.100/24
+    version: 2
+```
 
-First, install Microk8s.
+```console
+$ sudo netplan apply
+```
+
+Install DNS server:
+```console
+$ multipass exec dns -- bash
+$ sudo apt update
+$ sudo apt install dnsmasq -y
+$ sudo systemctl disable systemd-resolved
+$ sudo systemctl stop systemd-resolved
+$ sudo systemctl restart dnsmasq
+$ sudo systemctl status  dnsmasq
+```
+
+Configure dnsmasq:
+```console
+$ cat << EOF | sudo tee -a /etc/dnsmasq.conf
+no-resolv
+server=8.8.8.8
+server=8.8.4.4
+domain=mgmt
+EOF
+```
+
+Add records under /etc/hosts:
+```console
+$ cat << EOF | sudo tee -a /etc/hosts
+10.201.0.104   juju-controller.mgmt
+10.201.0.101   control-plane.mgmt
+10.201.0.102   user-plane.mgmt
+10.201.0.103   gnbsim.mgmt
+10.201.0.50    api.juju-controller.mgmt
+10.201.0.51    cos.mgmt
+10.201.0.52    amf.mgmt
+10.201.0.53    control-plane-nms.control-plane.mgmt
+10.201.0.200   upf.mgmt
+EOF
+```
+
+Restart DNS server:
+```console
+$ sudo systemctl reload dnsmasq
+```
+
+Test the DNS resolution.
+```console
+$ dig upf.mgmt
+; <<>> DiG 9.18.18-0ubuntu0.22.04.1-Ubuntu <<>> upf.mgmt
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 46312
+;; flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 1232
+;; QUESTION SECTION:
+;upf.mgmt.			IN	A
+
+;; ANSWER SECTION:
+upf.mgmt.		0	IN	A	10.201.0.200
+
+;; Query time: 0 msec
+;; SERVER: 127.0.0.53#53(127.0.0.53) (UDP)
+;; WHEN: Fri Dec 15 15:07:40 +03 2023
+;; MSG SIZE  rcvd: 53
+``` 
+
+### Configure network of VMs to add DNS server and routes
+
+#### User-plane VM
+
+Log in to DNS VM.
+```console
+$ multipass exec dns -- bash
+```
+
+Configure ip address for mgmt, core and access interfaces, add nameservers for "mgmt" interface and add route between Access to RAN network by replacing the content of /etc/netplan/50-cloud-init.yaml as following:
+
+ ```yaml
+network:
+    ethernets:
+        enp5s0:
+            dhcp4: true
+        enp6s0:
+            dhcp4: false
+            addresses:
+              - 10.201.0.102/24
+            nameservers:
+                search: [mgmt]
+                addresses: [10.201.0.100]
+            optional: true
+        enp7s0:
+            dhcp4: false
+            addresses:
+              - 10.203.0.100/24
+            optional: true
+        enp8s0:
+            dhcp4: false
+            addresses:
+              - 10.202.0.100/24
+            routes:
+              - to: 10.204.0.0/24
+                via: 10.202.0.1
+            optional: true
+    version: 2
+ ```
+
+Then, run the command to make the new configuration become active.
+ ```console
+ sudo netplan apply
+ ```
+
+Check the current DNS server. Repeat this step in all VMs after setting DNS server.
+```console
+$ resolvectl
+
+Link 3 (enp6s0)
+    Current Scopes: DNS
+         Protocols: +DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+Current DNS Server: 10.201.0.100
+       DNS Servers: 10.201.0.100
+        DNS Domain: mgmt
+```
+
+Check the route from Access interface to RAN network.
+```console
+$ ip route
+...
+10.204.0.0/24 via 10.202.0.1 dev enp8s0 proto static
+```
+
+#### Control-plane VM
+
+Log in to control-plane VM.
+
+```console
+$ multipass exec control-plane -- bash
+```
+
+Configure ip address and nameservers for "mgmt" interface by replacing the content of /etc/netplan/50-cloud-init.yaml as following:
+
+```yaml
+network:
+    ethernets:
+        enp5s0:
+            dhcp4: true
+        enp6s0:
+            dhcp4: false
+            addresses:
+              - 10.201.0.101/24
+            nameservers:
+                search: [mgmt]
+                addresses: [10.201.0.100]
+            optional: true
+    version: 2
+```
+
+Then, run the command to make the new configuration become active.
+ ```console
+$ sudo netplan apply
+ ```
+
+#### Gnbsim VM
+
+Log in to gnbsim VM.
+
+```console
+$ multipass exec gnbsim -- bash
+```
+
+Configure ip address for mgmt and ran interfaces, add nameservers for "mgmt" interface and add route between RAN to access network by replacing the content of /etc/netplan/50-cloud-init.yaml as following:
+
+```yaml
+network:
+    ethernets:
+        enp5s0:
+            dhcp4: true
+        enp6s0:
+            dhcp4: false
+            addresses:
+              - 10.201.0.103/24
+            nameservers:
+                search: [mgmt]
+                addresses: [10.201.0.100]
+            optional: true
+        enp7s0:
+            dhcp4: false
+            addresses:
+              - 10.204.0.100/24
+            routes:
+              - to: 10.202.0.0/24
+                via: 10.204.0.1
+            optional: true
+    version: 2
+```
+
+Run the command to make the new configuration become active.
+ ```console
+ sudo netplan apply
+ ```
+
+#### Juju-controller VM
+
+Log in to juju-controller VM.
+
+```console
+$ multipass exec juju-controller -- bash
+```
+
+Configure ip address and nameservers for "mgmt" interface by replacing the content of /etc/netplan/50-cloud-init.yaml as following:
+
+```yaml
+network:
+    ethernets:
+        enp5s0:
+            dhcp4: true
+        enp6s0:
+            dhcp4: false
+            addresses:
+              - 10.201.0.104/24
+            nameservers:
+                search: [mgmt]
+                addresses: [10.201.0.100]
+            optional: true
+    version: 2
+```
+
+Run the command to make the new configuration become active.
+ ```console
+ sudo netplan apply
+ ```
+
+
+#### RAN-access-router VM
+
+Log in to ran-access-router VM.
+
+```console
+$ multipass exec ran-access-router -- bash
+```
+
+Configure ip address for mgmt, ran and access interfaces by replacing the content of /etc/netplan/50-cloud-init.yaml as following:
+
+```yaml
+network:
+    ethernets:
+        enp5s0:
+            dhcp4: true
+        enp6s0:
+            dhcp4: false
+            addresses:
+              - 10.201.0.110/24
+            optional: true
+        enp7s0:
+            dhcp4: false
+            addresses:
+              - 10.204.0.1/24
+            optional: true
+        enp8s0:
+            dhcp4: false
+            addresses:
+              - 10.202.0.1/24
+            optional: true
+    version: 2
+```
+
+The `access-gateway-ip` is expected to forward the packets from the `access-interface` to the `gnb-subnet`.
+
+Set up IP forwarding
+
+```console
+echo net.ipv4.ip_forward=1 | sudo tee /etc/sysctl.conf
+sudo sysctl -w net.ipv4.ip_forward=1
+```
+
+#### Core-router VM
+
+Log in to core-router VM.
+
+```console
+$ multipass exec core-router -- bash
+```
+
+Configure ip address for mgmt and core interfaces by replacing the content of /etc/netplan/50-cloud-init.yaml as following:
+
+```yaml
+network:
+    ethernets:
+        enp5s0:
+            dhcp4: true
+        enp6s0:
+            dhcp4: false
+            addresses:
+              - 10.201.0.114/24
+            optional: true
+        enp7s0:
+            dhcp4: false
+            addresses:
+              - 10.203.0.1/24
+            optional: true
+    version: 2
+```
+
+Set up ip forwarding and NAT:
+
+```console
+cat << EOF | sudo tee /etc/rc.local
+#!/bin/bash
+iptables -t nat -A POSTROUTING -o enp5s0 -j MASQUERADE -s 10.203.0.0/16
+EOF
+sudo chmod +x /etc/rc.local
+sudo /etc/rc.local
+echo net.ipv4.ip_forward=1 | sudo tee /etc/sysctl.conf
+sudo sysctl -w net.ipv4.ip_forward=1
+```
+
+## 3. Configure VMs for SD-Core Deployment
+
+This section covers how to install Juju and MicroK8s to act as the infrastructure for SD-Core. Besides it also set up ssh keys between VMs.
+
+### Prepare SD-Core Control Plane VM
+
+All commands in this section are run on the `control-plane` VM.
+
+Login `control-plane` VM.
+
+```console
+multipass exec control-plane -- bash
+```
+
+Install Microk8s.
 
 ```console
 sudo snap install microk8s --channel=1.27-strict/stable
@@ -63,10 +580,56 @@ sudo usermod -a -G snap_microk8s $USER
 newgrp snap_microk8s
 ```
 
-The control plane needs to expose two services: the AMF and the NMS. In this next step, we enable the MetalLB add on in Microk8s, and give it a range of two IP addresses:
+The control plane needs to expose two services: the AMF and the NMS. In this step, we enable the MetalLB add on in Microk8s, and give it a range of two IP addresses:
 
 ```console
-sudo microk8s enable metallb:10.201.0.100-10.201.0.101
+sudo microk8s enable metallb:10.201.0.52-10.201.0.53
+```
+
+Generate ssh key pair and copy public key to `juju-controller` VM. 
+
+Create key pair.
+```console
+$ ssh-keygen 
+Generating public/private rsa key pair.
+Enter file in which to save the key (/home/ubuntu/.ssh/id_rsa): 
+Enter passphrase (empty for no passphrase): 
+Enter same passphrase again: 
+Your identification has been saved in /home/ubuntu/.ssh/id_rsa
+Your public key has been saved in /home/ubuntu/.ssh/id_rsa.pub
+The key fingerprint is:
+SHA256:7KO+OPL3hmkmMo8RyidTC8s31Z9G3ExqB7jTX1fg6/c ubuntu@cplane
+The key's randomart image is:
++---[RSA 3072]----+
+|              .  |
+|        .    . . |
+|       . . .  . .|
+|      ..+ *    ..|
+| ... . +S* + ... |
+|o.+.o  .= + ...  |
+|.*.=   oo+ .  . .|
+|  Oo+.*.o.     ..|
+|  .*+B++.       E|
++----[SHA256]-----+
+```
+
+Open and copy the public key.
+```console
+$ cat .ssh/id_rsa.pub
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDmbwQqKTooFMOgZNTtnCFrQP+DYxiMzX9+Xhuw9i8aQ+bcFSNicmTCZf5JVxRrLprrE/Ta9OOhWF4LfPX3qAT+zDJe7uKw6vu+G8HWu2fqWCiK+7ur+d5v9LZPeHGJyuQ3SoLF61ao+zeHlaEoaYvVQTiXuvgVEKqdEaSii08aodGuv2qkdUuij7SDQsrLoIkTs3zFDjQZDdd2gYXRNLCqH33nEZ7L47kMsMVTYj5YK9804iuP/6x83f9WlLsEgJ+I7fpMLX7mno3A1Ef6nAA0/FvN2JMc4CU+L+iMd9UENR8zUDhqifd08YyOvSlmbqg8WhqoCYrDcZ3SNBiYE8/th6O+ppERCjqxBxnBnWh+qGokIGA74qRJtXpdVbneg4eR3Ehy2j4EdUhG0uEgz4/H4gPF+qDvLj8HbODt3TSCdCh7qETQVVJT5vmOoOq1AgvNgX23iRZPTesHiNKq8Z4upeCZfG5Z2Zy2MtULBbNK5Q7Gy5eY5tN3XRohM61hh5k= ubuntu@control-plane
+```
+
+Login `juju-controller` VM and add the public key to under .ssh/authorized_keys file.
+
+```console
+multipass exec juju-oontroller -- bash
+```
+
+Add `conrol-plane` VM public key under `juju-controller` VMs authorized_keys.
+```console
+cat << EOF | sudo tee -a .ssh/authorized_keys
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDmbwQqKTooFMOgZNTtnCFrQP+DYxiMzX9+Xhuw9i8aQ+bcFSNicmTCZf5JVxRrLprrE/Ta9OOhWF4LfPX3qAT+zDJe7uKw6vu+G8HWu2fqWCiK+7ur+d5v9LZPeHGJyuQ3SoLF61ao+zeHlaEoaYvVQTiXuvgVEKqdEaSii08aodGuv2qkdUuij7SDQsrLoIkTs3zFDjQZDdd2gYXRNLCqH33nEZ7L47kMsMVTYj5YK9804iuP/6x83f9WlLsEgJ+I7fpMLX7mno3A1Ef6nAA0/FvN2JMc4CU+L+iMd9UENR8zUDhqifd08YyOvSlmbqg8WhqoCYrDcZ3SNBiYE8/th6O+ppERCjqxBxnBnWh+qGokIGA74qRJtXpdVbneg4eR3Ehy2j4EdUhG0uEgz4/H4gPF+qDvLj8HbODt3TSCdCh7qETQVVJT5vmOoOq1AgvNgX23iRZPTesHiNKq8Z4upeCZfG5Z2Zy2MtULBbNK5Q7Gy5eY5tN3XRohM61hh5k= ubuntu@control-plane
+EOF
 ```
 
 Export the Kubernetes configuration and copy that to the controller:
@@ -76,9 +639,68 @@ sudo microk8s.config > control-plane-cluster.yaml
 scp control-plane-cluster.yaml juju-controller.mgmt:
 ```
 
-### SD-Core User Plane
+Set alias for kubectl:
+```console
+cat << EOF | sudo tee -a ~/.bashrc
+alias kubectl="microk8s.kubectl"
+EOF
+source ~/.bashrc
+```
 
-All commands in this section are run on the SD-Core User Plane Kubernetes cluster host.
+Change coredns configmap by adding local dns server which is `10.201.0.100`.
+
+Append the following lines in configmap/coredns at the end of Corefile section.
+
+```yaml
+    mgmt:53 {
+         errors
+         cache 30
+         forward . 10.201.0.100
+    }
+```
+
+Edit configmap by running:
+```console
+kubectl -n kube-system edit configmap/coredns
+```
+
+After modification, the configmap looks like below yaml:
+
+```yaml
+apiVersion: v1
+data:
+  Corefile: |
+    .:53 {
+        errors
+        health {
+          lameduck 5s
+        }
+        ready
+        log . {
+          class error
+        }
+        kubernetes cluster.local in-addr.arpa ip6.arpa {
+          pods insecure
+          fallthrough in-addr.arpa ip6.arpa
+        }
+        prometheus :9153
+        forward . 8.8.8.8 8.8.4.4
+        cache 30
+        loop
+        reload
+        loadbalance
+    }
+    mgmt:53 {
+         errors
+         cache 30
+         forward . 10.201.0.100
+    }
+kind: ConfigMap
+```
+
+### Prepare SD-Core User Plane VM
+
+All commands in this section are run on the `user-plane` VM.
 
 Install MicroK8s, configure MetalLB to expose 1 IP address for the UPF (`10.201.0.200`), and add the Multus plugin:
 
@@ -94,6 +716,52 @@ sudo usermod -a -G snap_microk8s $USER
 newgrp snap_microk8s
 ```
 
+Generate ssh key pair and copy the public key to `juju-controller` VM.
+
+Create key pair.
+```console
+$ ssh-keygen 
+Generating public/private rsa key pair.
+Enter file in which to save the key (/home/ubuntu/.ssh/id_rsa): 
+Enter passphrase (empty for no passphrase): 
+Enter same passphrase again: 
+Your identification has been saved in /home/ubuntu/.ssh/id_rsa
+Your public key has been saved in /home/ubuntu/.ssh/id_rsa.pub
+The key fingerprint is:
+SHA256:7KO+OPL3hmkmMo8RyidTC8s31Z9G3ExqB7jTX1fg6/c ubuntu@cplane
+The key's randomart image is:
++---[RSA 3072]----+
+|              .  |
+|        .    . . |
+|       . . .  . .|
+|      ..+ *    ..|
+| ... . +S* + ... |
+|o.+.o  .= + ...  |
+|.*.=   oo+ .  . .|
+|  Oo+.*.o.     ..|
+|  .*+B++.       E|
++----[SHA256]-----+
+```
+
+Open and copy the public key.
+```console
+$ cat .ssh/id_rsa.pub
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDF4f0wB/ahrHqmUBiM+7x+gg04V1G3rTMK1VhKUvnntdRqYaEG2iR7V4f0EkwPscHtToPSV9qTVnHir5grtxxexTmfBr4NyiLcrix33I28w0ttRh4Y6k3jTzTlZ7ArN69abgiF2oz9nbzGEqiXho4V39IwSbGyzQzcduWNLMpA5ftXFDT4lB59hDJCPDlRSPe6wxBZ6doNPQemkudoCXXCGbdgCrZlzXFX4G0xoFQqyGCkPgDINpYGad+SvwU7j2JsmsaRNE+GF4S3cjNRChr7wlfijgXpi2a4Psiceg0LiyFMdALQYofQNdFbiUBlyp3lxNv6ph55QerOAO7l5mMdrGIL4xdhDqZnrWUgL5gI8sywQZMOfjm5kbkJiGKYggM8scE4ntWakxXpLcKiiXUvj9Ccou/+xVFK9YFgDP9c/75Y4DJgUrwkCmcJUUqqX94rjUsvMWmSruTKmSAatq1HFCL1W6dGMr4bj9bl7fmPhIYeBOJM0O1VClx0Umb/D2s= ubuntu@user-plane
+```
+
+Login `juju-controller` VM and add the public key to under .ssh/authorized_keys file.
+
+```console
+multipass exec juju-oontroller -- bash
+```
+
+Add `conrol-plane` VM public key under `juju-controller` VMs authorized_keys.
+```console
+cat << EOF | sudo tee -a .ssh/authorized_keys
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDF4f0wB/ahrHqmUBiM+7x+gg04V1G3rTMK1VhKUvnntdRqYaEG2iR7V4f0EkwPscHtToPSV9qTVnHir5grtxxexTmfBr4NyiLcrix33I28w0ttRh4Y6k3jTzTlZ7ArN69abgiF2oz9nbzGEqiXho4V39IwSbGyzQzcduWNLMpA5ftXFDT4lB59hDJCPDlRSPe6wxBZ6doNPQemkudoCXXCGbdgCrZlzXFX4G0xoFQqyGCkPgDINpYGad+SvwU7j2JsmsaRNE+GF4S3cjNRChr7wlfijgXpi2a4Psiceg0LiyFMdALQYofQNdFbiUBlyp3lxNv6ph55QerOAO7l5mMdrGIL4xdhDqZnrWUgL5gI8sywQZMOfjm5kbkJiGKYggM8scE4ntWakxXpLcKiiXUvj9Ccou/+xVFK9YFgDP9c/75Y4DJgUrwkCmcJUUqqX94rjUsvMWmSruTKmSAatq1HFCL1W6dGMr4bj9bl7fmPhIYeBOJM0O1VClx0Umb/D2s= ubuntu@user-plane
+EOF
+```
+
 Export the Kubernetes configuration and copy that to the controller:
 
 ```console
@@ -101,32 +769,91 @@ sudo microk8s.config > user-plane-cluster.yaml
 scp user-plane-cluster.yaml juju-controller.mgmt:
 ```
 
+Set alias for kubectl:
+```console
+cat << EOF | sudo tee -a ~/.bashrc
+alias kubectl="microk8s.kubectl"
+EOF
+source ~/.bashrc
+```
+
+Change coredns configmap by adding local dns server which is `10.201.0.100`.
+
+Append the following lines in configmap/coredns at the end of Corefile section.
+
+```yaml
+    mgmt:53 {
+         errors
+         cache 30
+         forward . 10.201.0.100
+    }
+```
+
+Edit configmap by running:
+```console
+kubectl -n kube-system edit configmap/coredns
+```
+
+After modification, the configmap looks like the one below:
+
+```yaml
+apiVersion: v1
+data:
+  Corefile: |
+    .:53 {
+        errors
+        health {
+          lameduck 5s
+        }
+        ready
+        log . {
+          class error
+        }
+        kubernetes cluster.local in-addr.arpa ip6.arpa {
+          pods insecure
+          fallthrough in-addr.arpa ip6.arpa
+        }
+        prometheus :9153
+        forward . 8.8.8.8 8.8.4.4
+        cache 30
+        loop
+        reload
+        loadbalance
+    }
+    mgmt:53 {
+         errors
+         cache 30
+         forward . 10.201.0.100
+    }
+kind: ConfigMap
+```
+
 In this guide, the following network interfaces are available on the SD-Core User Plane machine:
 
-| Interface Name | Purpose |
-|----------------|---------|
-| ens3           | internal Kubernetes management interface. This maps to the `management` subnet and must have an IP address |
-| ens4           | access interface. This maps to the `access` subnet, and does not have an IP on the host |
-| ens5           | core interface. This maps to the `core` subnet, and does not have an IP on the host. Note that internet egress is required here and routing tables must be set to route gNB generated traffic |
+| Interface Name    | Purpose                                                                                                                                                           |
+|-------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| enp6s0            | internal Kubernetes management interface. This maps to the `management` subnet.                                                                                   |
+| enp7s0            | core interface. This maps to the `core` subnet.                                                                                                                   |
+| enp8s0            | access interface. This maps to the `access` subnet. Note that internet egress is required here and routing tables are already set to route gNB generated traffic. |
 
-Now we create the MACVLAN bridges for ens4 and ens5. These instructions are put into a file that is executed on reboot so the interfaces will come back.
+Now we create the MACVLAN bridges for enp7s0 and enp7s0. These instructions are put into a file that is executed on reboot so the interfaces will come back.
 
 ```console
 cat << EOF | sudo tee /etc/rc.local
 #!/bin/bash
 
-ip link add access link ens4 type macvlan mode bridge
-ip link set dev access up
-ip link add core link ens5 type macvlan mode bridge
-ip link set dev core up
+sudo ip link add access link enp8s0 type macvlan mode bridge
+sudo ip link set dev access up
+sudo ip link add core link enp7s0 type macvlan mode bridge
+sudo ip link set dev core up
 EOF
 sudo chmod +x /etc/rc.local
 sudo /etc/rc.local
 ```
 
-### gNB Simulator
+### Prepare gNB Simulator VM
 
-All commands in this section are run on the gNB Simulator Kubernetes cluster host.
+All commands in this section are run on the `gnbsim` VM.
 
 Install MicroK8s and add the Multus plugin:
 
@@ -141,6 +868,52 @@ sudo usermod -a -G snap_microk8s $USER
 newgrp snap_microk8s
 ```
 
+Generate ssh key pair and copy the public key to `juju-controller` VM.
+
+Create key pair.
+```console
+$ ssh-keygen 
+Generating public/private rsa key pair.
+Enter file in which to save the key (/home/ubuntu/.ssh/id_rsa): 
+Enter passphrase (empty for no passphrase): 
+Enter same passphrase again: 
+Your identification has been saved in /home/ubuntu/.ssh/id_rsa
+Your public key has been saved in /home/ubuntu/.ssh/id_rsa.pub
+The key fingerprint is:
+SHA256:7KO+OPL3hmkmMo8RyidTC8s31Z9G3ExqB7jTX1fg6/c ubuntu@cplane
+The key's randomart image is:
++---[RSA 3072]----+
+|              .  |
+|        .    . . |
+|       . . .  . .|
+|      ..+ *    ..|
+| ... . +S* + ... |
+|o.+.o  .= + ...  |
+|.*.=   oo+ .  . .|
+|  Oo+.*.o.     ..|
+|  .*+B++.       E|
++----[SHA256]-----+
+```
+
+Open and copy the public key.
+```console
+$ cat .ssh/id_rsa.pub
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCs6xKaPLaOjX577VE47UuLlsu1bK9Otar2oJZOLFrQuncDEm5GBQrqGxzN1OLfY9zZH4js7gnAFRhGq6R7D8CQckDVZx91g5aawnU4lgaT3ZfgyjNVUjOh7AMjn9aK4Foolp8aZrDgaSR/FFvMAOoBYkvAFBTpFRd0RAeKYxowiUWVo46AwMP/SyhhosV40ahwOm9MXUIvBqlV877ZWUzUNWOHNT3hpB1r286TyViuSZOGjCm8BXooS2zlTnCE2EsQtmzbb5AuqtuI6UBLUtvv/47605caVyGV+aPDWHK7pz014aL7Sh1DduDcs046igGTjNjpGhkCrfASAkaa66I7KEZJfpLa/kwpnqv8bn6mvuXNvaD/+NcFdb1xyxk8bfBl9qsfJ1gKrSide00GwXOLy0aU7YH9KoQavfhF4/OX9q65kl1SfQeukbRRHWhltg8f6MXr+7WBlk7FcAzgCiQZMUhxpZsAv3FQQgiZCN4G20K/2pajEzuEr7NEWLG7W2U= ubuntu@gnbsim
+```
+
+Login `juju-controller` VM and add the public key to under .ssh/authorized_keys file.
+
+```console
+multipass exec juju-controller -- bash
+```
+
+Add `conrol-plane` VM public key under `juju-controller` VMs authorized_keys.
+```console
+cat << EOF | sudo tee -a .ssh/authorized_keys
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCs6xKaPLaOjX577VE47UuLlsu1bK9Otar2oJZOLFrQuncDEm5GBQrqGxzN1OLfY9zZH4js7gnAFRhGq6R7D8CQckDVZx91g5aawnU4lgaT3ZfgyjNVUjOh7AMjn9aK4Foolp8aZrDgaSR/FFvMAOoBYkvAFBTpFRd0RAeKYxowiUWVo46AwMP/SyhhosV40ahwOm9MXUIvBqlV877ZWUzUNWOHNT3hpB1r286TyViuSZOGjCm8BXooS2zlTnCE2EsQtmzbb5AuqtuI6UBLUtvv/47605caVyGV+aPDWHK7pz014aL7Sh1DduDcs046igGTjNjpGhkCrfASAkaa66I7KEZJfpLa/kwpnqv8bn6mvuXNvaD/+NcFdb1xyxk8bfBl9qsfJ1gKrSide00GwXOLy0aU7YH9KoQavfhF4/OX9q65kl1SfQeukbRRHWhltg8f6MXr+7WBlk7FcAzgCiQZMUhxpZsAv3FQQgiZCN4G20K/2pajEzuEr7NEWLG7W2U= ubuntu@gnbsim
+EOF
+```
+
 Export the Kubernetes configuration and copy that to the controller:
 
 ```console
@@ -148,27 +921,86 @@ sudo microk8s.config > gnb-cluster.yaml
 scp gnb-cluster.yaml juju-controller.mgmt:
 ```
 
+Set alias for kubectl:
+```console
+cat << EOF | sudo tee -a ~/.bashrc
+alias kubectl="microk8s.kubectl"
+EOF
+source ~/.bashrc
+```
+
+Change coredns configmap by adding local dns server which is `10.201.0.100`.
+
+Append the following lines in configmap/coredns at the end of Corefile section.
+
+```yaml
+    mgmt:53 {
+         errors
+         cache 30
+         forward . 10.201.0.100
+    }
+```
+
+Edit configmap by running:
+```console
+kubectl -n kube-system edit configmap/coredns
+```
+
+After modification, the configmap looks like the one below:
+
+```yaml
+apiVersion: v1
+data:
+  Corefile: |
+    .:53 {
+        errors
+        health {
+          lameduck 5s
+        }
+        ready
+        log . {
+          class error
+        }
+        kubernetes cluster.local in-addr.arpa ip6.arpa {
+          pods insecure
+          fallthrough in-addr.arpa ip6.arpa
+        }
+        prometheus :9153
+        forward . 8.8.8.8 8.8.4.4
+        cache 30
+        loop
+        reload
+        loadbalance
+    }
+    mgmt:53 {
+         errors
+         cache 30
+         forward . 10.201.0.100
+    }
+kind: ConfigMap
+```
+
 In this guide, the following network interfaces are available on the gNB Simulator machine:
 
-| Interface Name | Purpose |
-|----------------|---------|
-| ens3           | internal Kubernetes management interface. This maps to the `management` subnet and must have an IP address |
-| ens4           | ran interface. This maps to the `ran` subnet, and does not have an IP on the host |
+| Interface Name | Purpose                                                                         |
+|----------------|---------------------------------------------------------------------------------|
+| enp6s0           | internal Kubernetes management interface. This maps to the `management` subnet. |
+| enp7s0           | ran interface. This maps to the `ran` subnet.                                   |
 
-Now we create the MACVLAN bridges for ens4, and label them accordingly:
+Now we create the MACVLAN bridges for enp7s0, and label them accordingly:
 
 ```console
 cat << EOF | sudo tee /etc/rc.local
 #!/bin/bash
 
-ip link add ran link ens4 type macvlan mode bridge
-ip link set dev ran up
+sudo ip link add ran link enp7s0 type macvlan mode bridge
+sudo ip link set dev ran up
 EOF
 sudo chmod +x /etc/rc.local
 sudo /etc/rc.local
 ```
 
-### Juju Controller
+### Prepare Juju Controller VM
 
 Begin by installing MicroK8s to hold the Juju controller, and configure MetalLB to expose one IP address for the controller (`10.201.0.50`), and one for the Canonical Observability Stack (`10.201.0.51)`.
 
@@ -199,20 +1031,78 @@ export KUBECONFIG=gnb-cluster.yaml
 juju add-k8s gnb-cluster --controller sdcore
 ```
 
+Set alias for kubectl:
+```console
+cat << EOF | sudo tee -a ~/.bashrc
+alias kubectl="microk8s.kubectl"
+EOF
+source ~/.bashrc
+```
+
+Change coredns configmap by adding local dns server which is `10.201.0.100`.
+
+Append the following lines in configmap/coredns at the end of `Corefile` section.
+
+```yaml
+    mgmt:53 {
+         errors
+         cache 30
+         forward . 10.201.0.100
+    }
+```
+
+Edit configmap by running:
+```console
+kubectl -n kube-system edit configmap/coredns
+```
+
+After modification, the configmap looks like the one below:
+
+```yaml
+apiVersion: v1
+data:
+  Corefile: |
+    .:53 {
+        errors
+        health {
+          lameduck 5s
+        }
+        ready
+        log . {
+          class error
+        }
+        kubernetes cluster.local in-addr.arpa ip6.arpa {
+          pods insecure
+          fallthrough in-addr.arpa ip6.arpa
+        }
+        prometheus :9153
+        forward . 8.8.8.8 8.8.4.4
+        cache 30
+        loop
+        reload
+        loadbalance
+    }
+    mgmt:53 {
+         errors
+         cache 30
+         forward . 10.201.0.100
+    }
+kind: ConfigMap
+```
 You may now proceed to deploy the SD-Core Control Plane and SD-Core User Plane
 
-## 2. Deploy SD-Core Control Plane
+## 4. Deploy SD-Core Control Plane
 
 The following steps build on the Juju controller which was bootstrapped and knows how to manage the SD-Core Control Plane Kubernetes cluster.
 
-First, create a Juju overlay file that specifies the Access and Mobility Management Function (AMF) host name and IP address for sharing with the radios. This host name must be resolvable by the gNB and the IP address must be reachable and resolve to the AMF unit. In the bootstrap step, we set the Control Plane MetalLB range to start at `10.201.0.100`, so that is what we use in the configuration.
+First, create a Juju overlay file that specifies the Access and Mobility Management Function (AMF) host name and IP address for sharing with the radios. This host name must be resolvable by the gNB and the IP address must be reachable and resolve to the AMF unit. In the bootstrap step, we set the Control Plane MetalLB range to start at `10.201.0.52`, so that is what we use in the configuration.
 
 ```console
 cat << EOF > control-plane-overlay.yaml
 applications:
   amf:
     options:
-      external-amf-ip: 10.201.0.100
+      external-amf-ip: 10.201.0.52
       external-amf-hostname: amf.mgmt
 EOF
 ```
@@ -242,10 +1132,11 @@ juju config traefik-k8s external_hostname=control-plane.mgmt
 
 ### Checkpoint
 
-You should be able to see the AMF External load balancer service in Kubernetes. Log into the control plane cluster and execute the following command:
+You should be able to see the AMF External load balancer service in Kubernetes. Log into the `control-plane` VM and execute the following command:
 
 ```console
-microk8s.kubectl get services -A | grep LoadBalancer
+multipass exec control-plane -- bash
+kubectl get services -A | grep LoadBalancer
 ```
 
 This will show output similar to the following, indicating:
@@ -255,11 +1146,11 @@ This will show output similar to the following, indicating:
 These IP addresses came from MetalLB and were configured in the bootstrap step.
 
 ```
-control-plane    amf-external  LoadBalancer  10.152.183.179  10.201.0.100   38412:30408/SCTP
-control-plane    traefik-k8s   LoadBalancer  10.152.183.28   10.201.0.101   80:32349/TCP,443:31925/TCP
+control-plane    amf-external  LoadBalancer  10.152.183.179  10.201.0.52   38412:30408/SCTP
+control-plane    traefik-k8s   LoadBalancer  10.152.183.28   10.201.0.53   80:32349/TCP,443:31925/TCP
 ```
 
-## 3. Deploy SD-Core User Plane
+## 5. Deploy SD-Core User Plane
 
 Create a Juju model to represent the User Plane, using the cloud `user-plane-cluster`, which was created in the Bootstrap step. The following parameters can be set:
 
@@ -271,9 +1162,6 @@ Create a Juju model to represent the User Plane, using the cloud `user-plane-clu
 - `core-ip`: the IP address for the UPF to use on the `core` subnet
 - `gnb-subnet`: the subnet CIDR where the gNB radios are reachable.
 
-```{note}
-The `access-gateway-ip` is expected to forward the packets from the `access-interface` to the `gnb-subnet`
-```
 
 ```console
 cat << EOF > upf-overlay.yaml
@@ -322,7 +1210,7 @@ This should produce output similar to the following indicating that the PFCP age
 user-plane  upf-external  LoadBalancer  10.152.183.126  10.201.0.200  8805:31101/UDP
 ```
 
-## 4. Deploy the gNB Simulator
+## 6. Deploy the gNB Simulator
 
 Create a new Juju model named `gnbsim` on the Juju controller cloud:
 
@@ -344,7 +1232,7 @@ juju deploy sdcore-gnbsim-k8s gnbsim --channel=edge \
 --config gnb-ip-address=10.204.0.10/24 \
 --config icmp-packet-destination=8.8.8.8 \
 --config upf-gateway=10.204.0.1 \
---config upf-subnet=10.202.0.0/16
+--config upf-subnet=10.202.0.0/24
 ```
 
 Now we use the integration between the gnbsim operator and the AMF operator to exchange the AMF location information.
@@ -360,7 +1248,7 @@ And present the offering of the gNB identity for integrating with the NMS.
 juju offer gnbsim.gnbsim:fiveg_gnb_identity
 ```
 
-## 5. Configure SD-Core
+## 7. Configure SD-Core
 
 Still on the Juju controller, switch to the control-plane model.
 
@@ -380,7 +1268,7 @@ juju integrate gnbsim:fiveg_gnb_identity nms:fiveg_gnb_identity
 The next steps are performed using a web browser to navigate to the NMS at http://control-plane-nms.control-plane.mgmt/
 
 ```{note}
-The computer that is running the web browser must also use the same DNS server as the rest of the environment.
+The computer that is running the web browser must also use the same DNS server as the rest of the environment !!
 ```
 
 In the Network Management System (NMS), create a network slice with the following attributes:
@@ -407,7 +1295,7 @@ We will now add a subscriber with the IMSI that was provided to the gNB simulato
 - Network Slice: `Tutorial`
 - Device Group: `Tutorial-default`
 
-## 6. Integrate SD-Core with Observability
+## 8. Integrate SD-Core with Observability
 
 We will integrate the 5G core network with the Canonical Observability Stack (COS). All commands are to be executed on the Juju controller node.
 
@@ -511,7 +1399,7 @@ This dashboard presents an overview of your 5G Network status. Keep this page op
 :align: center
 ```
 
-## 7. Run the 5G simulation
+## 9. Run the 5G simulation
 
 On the juju controller, switch to the gnbsim model.
 ```console
@@ -594,7 +1482,7 @@ You can also revisit the Grafana dashboard to view the metrics for the test run.
 :align: center
 ```
 
-## 8. Review
+## 10. Review
 
 We have deployed 4 Kubernetes clusters, bootstrapped a Juju controller to manage them all, and deployed portions of the Charmed 5g SD-Core software according to CUPS principles. You know have 5 Juju models as follows
 
@@ -611,7 +1499,7 @@ You have learned how to:
 - run a simulation testing data flow through the 5g core
 - view the metrics produced by the 5g core
 
-## 9. Cleaning up
+## 11. Cleaning up
 
 Juju makes it simple to cleanly remove all the deployed applications by simply removing the model itself. To completely remove all deployments, use the following:
 
@@ -631,4 +1519,15 @@ MicroK8s can also be removed from each cluster as follows:
 sudo snap remove microk8s
 ```
 
-Finally you may wish to reboot the servers to ensure no residual network configurations remain.
+You may wish to reboot the multipass VMs to ensure no residual network configurations remain.
+
+Multipass VMs also can be deleted from host machine:
+
+```console
+multipass delete --all
+```
+
+If required, the VMs can be permanently removed:
+```console
+multipass purge
+```
