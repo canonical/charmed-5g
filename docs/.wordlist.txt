@@ -7,6 +7,7 @@ AUSF
 AVX
 balancer
 bessd
+br
 Bitrate
 bootloader
 Charmhub
@@ -19,6 +20,7 @@ coredns
 Corefile
 CPUs
 CSR
+DHCP
 DN
 dns
 dnsmasq
@@ -70,6 +72,7 @@ N3
 N4
 N6
 netplan
+Nameserver
 nameservers
 NIC
 NGAPP
@@ -108,8 +111,10 @@ UE
 unsecure
 UPF
 UPFs
+vCPUs
 VLAN
 VM
 VMs
+VM's
 Webui
 yaml
