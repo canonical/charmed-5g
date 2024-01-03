@@ -96,7 +96,7 @@ amf                                active       1  sdcore-amf-k8s               
 ausf                               active       1  sdcore-ausf-k8s               edge            40  10.152.183.237  no
 gnbsim                             active       1  sdcore-gnbsim-k8s             edge            43  10.152.183.167  no
 grafana-agent-k8s         0.32.1   waiting      1  grafana-agent-k8s             latest/stable   44  10.152.183.245  no       installing agent
-mongodb-k8s                        active       1  mongodb-k8s                   5/edge          36  10.152.183.156  no       Primary
+mongodb-k8s                        active       1  mongodb-k8s                   6/beta          36  10.152.183.156  no       Primary
 nms                                active       1  sdcore-nms-k8s                edge            26  10.152.183.121  no
 nrf                                active       1  sdcore-nrf-k8s                edge            62  10.152.183.123  no
 nssf                               active       1  sdcore-nssf-k8s               edge            37  10.152.183.165  no
