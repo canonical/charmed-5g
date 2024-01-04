@@ -73,13 +73,13 @@ juju add-model core
 Deploy the `sdcore-router-k8s` operator:
 
 ```console
-juju deploy sdcore-router-k8s router --trust --channel=edge
+juju deploy sdcore-router-k8s router --trust --channel=beta
 ```
 
 Deploy the `sdcore-k8s` charm bundle:
 
 ```console
-juju deploy sdcore-k8s --trust --channel=edge
+juju deploy sdcore-k8s --trust --channel=beta
 ```
 
 Deploying the core network can take up to 15 minutes. You can validate the status of the
@@ -135,7 +135,7 @@ webui/0*                     active    idle   10.1.182.33
 Deploy the `sdcore-gnbsim-k8s` operator
 
 ```console
-juju deploy sdcore-gnbsim-k8s gnbsim --trust --channel=edge
+juju deploy sdcore-gnbsim-k8s gnbsim --trust --channel=beta
 ```
 
 Integrate it to the AMF and the NMS:
