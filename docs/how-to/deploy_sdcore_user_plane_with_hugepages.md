@@ -46,7 +46,7 @@ EOF
 Deploy the `sdcore-user-plane-k8s` bundle.
 
 ```console
-juju deploy sdcore-user-plane-k8s --trust --channel=edge --overlay upf-overlay.yaml
+juju deploy sdcore-user-plane-k8s --trust --channel=beta --overlay upf-overlay.yaml
 ```
 
 ## Validate HugePages support
