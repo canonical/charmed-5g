@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- One of the `sdcore` bundles deployed in a Juju model
+- One of the `sdcore-k8s` bundles deployed in a Juju model
 
 ## Deploy the `cos-lite` bundle
 
@@ -57,7 +57,21 @@ juju integrate prometheus:receive-remote-write grafana-agent-k8s:send-remote-wri
 juju integrate loki:logging grafana-agent-k8s:logging-consumer
 ```
 
-You can now see metrics and logs coming from SD-Core in your Grafana dashboard.
+Retrieve the Grafana URL and admin password:
+
+```console
+ubuntu@host:~ $ juju run grafana/leader get-admin-password
+Running operation 1 with 1 task
+  - task 2 on unit-grafana-0
+
+Waiting for task 2...
+admin-password: ngdrjomIOMyt
+url: http://10.0.0.5/cos-grafana
+
+```
+
+You can now see metrics and logs coming from SD-Core in your Grafana dashboard. Login using 
+the "admin" username and the admin password obtained in the last command.
 
 ```{image} ../images/grafana_5g_dashboard_sim_after.png
 :alt: Grafana dashboard

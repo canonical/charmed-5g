@@ -14,9 +14,9 @@ You will need a Kubernetes cluster installed and configured with Multus.
 ## Deploy
 
 ```bash
-juju deploy sdcore --trust --channel=edge
+juju deploy sdcore-k8s --trust --channel=beta
 ```
 
 ## Configure
 
-To view all configuration options, please visit the bundle's [Charmhub page](https://charmhub.io/sdcore/).
+To view all configuration options, please visit the bundle's [Charmhub page](https://charmhub.io/sdcore-k8s/).

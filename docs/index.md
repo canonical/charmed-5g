@@ -15,9 +15,9 @@ Charmed 5G is for private mobile networks operators and all connectivity enthusi
 ````{grid} 1 1 2 2
 
 ```{grid-item-card}
-:link: tutorial/
+:link: tutorials/
 
-Tutorial
+Tutorials
 ^^^
 
 **Start here**: a hands-on introduction to Charmed 5G for new users
@@ -68,7 +68,7 @@ Charmed 5G is a member of the Ubuntu family. It’s an open source project that 
 ```{toctree}
 :hidden:
 
-tutorial/index
+tutorials/index
 how-to/index
 reference/index
 explanation/index

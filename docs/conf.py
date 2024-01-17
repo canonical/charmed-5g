@@ -91,6 +91,7 @@ linkcheck_anchors_ignore_for_url = [
     r'https://github\.com/.*'
 ]
 linkcheck_anchors_ignore_for_url.extend(custom_linkcheck_anchors_ignore_for_url)
+linkcheck_ignore = [r'http://.*\.mgmt/']
 
 # Tags cannot be added directly in custom_conf.py, so add them here
 for tag in custom_tags:
