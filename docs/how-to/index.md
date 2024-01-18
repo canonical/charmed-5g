@@ -12,7 +12,6 @@ deploy_sdcore_gnbsim
 deploy_sdcore_standalone
 deploy_sdcore_user_plane_in_dpdk_mode
 deploy_sdcore_user_plane_with_hugepages
-enable_hugepages_for_upf
 integrate_sdcore_with_observability
 ```
 
