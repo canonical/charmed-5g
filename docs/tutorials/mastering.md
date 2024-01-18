@@ -9,7 +9,7 @@ A machine running Ubuntu 22.04 with the following resources:
 - At least one NIC with internet access
 - 8 cores
 - 24 GB RAM
-- 150 GiB disk  
+- 150 GiB disk
 
 ### Networks
 
@@ -28,7 +28,7 @@ Before creating the configuration of the network bridges, please make sure that:
 - mgmt-br route metric value is higher than your default route's metric
 - core-br metric value is higher than your mgmt-br route's metric
 
-Change the metrics of SD-Core routes which are indicated with comments below, relatively to your default route's metric if required. 
+Change the metrics of SD-Core routes which are indicated with comments below, relatively to your default route's metric if required.
 
 ```console
 cat << EOF | sudo tee /etc/netplan/99-sdcore-networks.yaml
@@ -136,7 +136,7 @@ EOF
 ```
 
 ```console
-lxd init --preseed < ~/preseed.yaml 
+lxd init --preseed < ~/preseed.yaml
 ```
 
 ### Install and configure Multipass
@@ -186,10 +186,15 @@ Wait until all VMs are in a `Running` state.
 
 ### Checkpoint 1: Are the VM's ready ?
 
-You should be able to see all the VMs in a `Running` state with their default IP addresses.
+You should be able to see all the VMs in a `Running` state with their default IP addresses by executing the following command:
 
 ```console
-$ multipass list
+multipass list
+```
+
+The output should be similar to the following
+
+```
 Name                    State             IPv4             Image
 juju-controller         Running           10.231.204.5     Ubuntu 22.04 LTS
 core-router             Running           10.231.204.200   Ubuntu 22.04 LTS
@@ -244,12 +249,19 @@ sudo systemctl restart dnsmasq
 Configure dnsmasq:
 
 ```console
-cat << EOF | sudo tee -a /etc/dnsmasq.conf
+cat << EOF | sudo tee /etc/dnsmasq.conf
 no-resolv
 server=8.8.8.8
 server=8.8.4.4
 domain=mgmt
+addn-hosts=/etc/hosts.tutorial
 EOF
+```
+
+Update resolv.conf as we are no longer using systemd-resolved:
+```console
+sudo rm /etc/resolv.conf
+echo 127.0.0.1 | sudo tee /etc/resolv.conf
 ```
 
 The following IP addresses are used in this tutorial and must be present in the DNS Server that all hosts are using.
@@ -269,15 +281,15 @@ The following IP addresses are used in this tutorial and must be present in the 
 Add records under /etc/hosts:
 
 ```console
-cat << EOF | sudo tee -a /etc/hosts
-10.201.0.104   juju-controller.mgmt
-10.201.0.101   control-plane.mgmt
-10.201.0.102   user-plane.mgmt
-10.201.0.103   gnbsim.mgmt
+cat << EOF | sudo tee -a /etc/hosts.tutorial
 10.201.0.50    api.juju-controller.mgmt
 10.201.0.51    cos.mgmt
 10.201.0.52    amf.mgmt
 10.201.0.53    control-plane-nms.control-plane.mgmt
+10.201.0.101   control-plane.mgmt
+10.201.0.102   user-plane.mgmt
+10.201.0.103   gnbsim.mgmt
+10.201.0.104   juju-controller.mgmt
 10.201.0.200   upf.mgmt
 EOF
 ```
@@ -285,12 +297,12 @@ EOF
 Reload the DNS configuration:
 
 ```console
-sudo systemctl reload dnsmasq
+sudo systemctl restart dnsmasq
 ```
 
-### Checkpoint 2: Is the DNS server running properly ?
+### Checkpoint 2: Is the DNS server running properly?
 
-You should expect to see that `dnsmasq` service is up and running. 
+You should expect to see that `dnsmasq` service is up and running.
 
 ```console
 $ sudo systemctl status dnsmasq
@@ -305,26 +317,12 @@ dnsmasq.service - dnsmasq - A lightweight DHCP and caching DNS server
 Test the DNS resolution and expect that the Nameserver is able to resolve the registered host names.
 
 ```console
-$ dig upf.mgmt
-; <<>> DiG 9.18.18-0ubuntu0.22.04.1-Ubuntu <<>> upf.mgmt
-;; global options: +cmd
-;; Got answer:
-;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 46312
-;; flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
-
-;; OPT PSEUDOSECTION:
-; EDNS: version: 0, flags:; udp: 1232
-;; QUESTION SECTION:
-;upf.mgmt.   IN A
-
-;; ANSWER SECTION:
-upf.mgmt.  0 IN A 10.201.0.200
-
-;; Query time: 0 msec
-;; SERVER: 127.0.0.53#53(127.0.0.53) (UDP)
-;; WHEN: Fri Dec 15 15:07:40 +03 2023
-;; MSG SIZE  rcvd: 53
+host upf.mgmt
 ```
+
+You should see `user-plane.mgmt has address 10.201.0.102`
+
+Log out of the VM.
 
 ### Add DNS server and routes to the other VM's
 
@@ -391,10 +389,19 @@ Current DNS Server: 10.201.0.100
 Check the route from `access` interface to the `ran` network.
 
 ```console
-$ ip route
-...
+ip route
+```
+
+You should see the following routes in addition to the regular host routes.
+
+```console
+10.201.0.0/24 dev enp6s0 proto kernel scope link src 10.201.0.102
+10.202.0.0/24 dev enp8s0 proto kernel scope link src 10.202.0.100
+10.203.0.0/24 dev enp7s0 proto kernel scope link src 10.203.0.100
 10.204.0.0/24 via 10.202.0.1 dev enp8s0 proto static
 ```
+
+Log out of the VM.
 
 #### Control-plane VM
 
@@ -436,6 +443,8 @@ Check the current DNS server.
 ```console
 resolvectl
 ```
+
+Log out of the VM.
 
 #### Gnbsim VM
 
@@ -489,10 +498,24 @@ resolvectl
 Check the route from `ran` interface to the `access` network.
 
 ```console
+ip route
+```
+
+You should see the following routes in addition to the regular host routes.
+
+```console
+10.201.0.0/24 dev enp6s0 proto kernel scope link src 10.201.0.103
+10.202.0.0/24 via 10.204.0.1 dev enp7s0 proto static
+10.204.0.0/24 dev enp7s0 proto kernel scope link src 10.204.0.100
+```
+
+```console
 $ ip route
 ...
-10.202.0.0/24 via 10.204.0.1 dev enp7s0 proto static 
+10.202.0.0/24 via 10.204.0.1 dev enp7s0 proto static
 ```
+
+Log out of the VM.
 
 #### Juju-controller VM
 
@@ -534,6 +557,8 @@ Check the current DNS server.
 ```console
 resolvectl
 ```
+
+Log out of the VM.
 
 #### RAN-access-router VM
 
@@ -586,6 +611,8 @@ echo net.ipv4.ip_forward=1 | sudo tee /etc/sysctl.conf
 sudo sysctl -w net.ipv4.ip_forward=1
 ```
 
+Log out of the VM.
+
 #### Core-router VM
 
 Log in to the `core-router` VM.
@@ -630,15 +657,40 @@ cat << EOF | sudo tee /etc/rc.local
 #!/bin/bash
 iptables -t nat -A POSTROUTING -o enp5s0 -j MASQUERADE -s 10.203.0.0/24
 EOF
+
 sudo chmod +x /etc/rc.local
 sudo /etc/rc.local
-echo net.ipv4.ip_forward=1 | sudo tee /etc/sysctl.conf
-sudo sysctl -w net.ipv4.ip_forward=1
+sudo sysctl -w net.ipv4.ip_forward=1 | sudo tee -a /etc/sysctl.conf
 ```
+
+Log out of the VM.
 
 ## 3. Configure VMs for SD-Core Deployment
 
 This section covers setting up the SSH keys and installation of Juju and MicroK8s on VMs which are going to build up the infrastructure for SD-Core.
+
+As we are going to be copying files around using ssh, we now will set up a new ssh key on the host running the tutorial:
+
+```console
+ssh-keygen -f ~/tutorial_rsa -N ""
+```
+
+Copy the keys to all the SD-Core VMs:
+
+```console
+for VM in control-plane juju-controller gnbsim user-plane
+do
+  multipass transfer ~/tutorial_rsa ${VM}:.ssh/id_rsa
+  multipass transfer ~/tutorial_rsa.pub ${VM}:.ssh/id_rsa.pub
+  multipass exec ${VM} -- sh -c 'cat .ssh/id_rsa.pub >> .ssh/authorized_keys'
+done
+```
+
+```{note}
+You may now delete the `tutorial_rsa` and `tutorial_rsa.pub` files from the host.
+```
+
+Log out of the VM.
 
 ### Prepare SD-Core Control Plane VM
 
@@ -654,7 +706,6 @@ Install Microk8s.
 sudo snap install microk8s --channel=1.27-strict/stable
 sudo microk8s enable hostpath-storage
 sudo usermod -a -G snap_microk8s $USER
-newgrp snap_microk8s
 ```
 
 The control plane needs to expose two services: the AMF and the NMS. In this step, we enable the MetalLB add on in Microk8s, and give it a range of two IP addresses:
@@ -663,119 +714,18 @@ The control plane needs to expose two services: the AMF and the NMS. In this ste
 sudo microk8s enable metallb:10.201.0.52-10.201.0.53
 ```
 
-Generate SSH key pair and copy public key to `juju-controller` VM.
-
-Create key pair.
+Now update MicroK8s DNS to point to our DNS server
 
 ```console
-$ ssh-keygen 
-Generating public/private rsa key pair.
-Enter file in which to save the key (/home/ubuntu/.ssh/id_rsa): 
-Enter passphrase (empty for no passphrase): 
-Enter same passphrase again: 
-Your identification has been saved in /home/ubuntu/.ssh/id_rsa
-Your public key has been saved in /home/ubuntu/.ssh/id_rsa.pub
-The key fingerprint is:
-SHA256:7KO+OPL3hmkmMo8RyidTC8s31Z9G3ExqB7jTX1fg6/c ubuntu@cplane
-The key's randomart image is:
-+---[RSA 3072]----+
-|              .  |
-|        .    . . |
-|       . . .  . .|
-|      ..+ *    ..|
-| ... . +S* + ... |
-|o.+.o  .= + ...  |
-|.*.=   oo+ .  . .|
-|  Oo+.*.o.     ..|
-|  .*+B++.       E|
-+----[SHA256]-----+
+sudo microk8s disable dns
+sudo microk8s enable dns:10.201.0.100
 ```
 
-Open and copy the public key.
-
-```console
-$ cat .ssh/id_rsa.pub
-ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDmbwQqKTooFMOgZNTtnCFrQP+DYxiMzX9+Xhuw9i8aQ+bcFSNicmTCZf5JVxRrLprrE/Ta9OOhWF4LfPX3qAT+zDJe7uKw6vu+G8HWu2fqWCiK+7ur+d5v9LZPeHGJyuQ3SoLF61ao+zeHlaEoaYvVQTiXuvgVEKqdEaSii08aodGuv2qkdUuij7SDQsrLoIkTs3zFDjQZDdd2gYXRNLCqH33nEZ7L47kMsMVTYj5YK9804iuP/6x83f9WlLsEgJ+I7fpMLX7mno3A1Ef6nAA0/FvN2JMc4CU+L+iMd9UENR8zUDhqifd08YyOvSlmbqg8WhqoCYrDcZ3SNBiYE8/th6O+ppERCjqxBxnBnWh+qGokIGA74qRJtXpdVbneg4eR3Ehy2j4EdUhG0uEgz4/H4gPF+qDvLj8HbODt3TSCdCh7qETQVVJT5vmOoOq1AgvNgX23iRZPTesHiNKq8Z4upeCZfG5Z2Zy2MtULBbNK5Q7Gy5eY5tN3XRohM61hh5k= ubuntu@control-plane
-```
-
-Log in to the `juju-controller` VM and add the public key under `.ssh/authorized_keys` file.
-
-```console
-multipass shell juju-controller
-```
-
-Add `conrol-plane` VM public key under `juju-controller` VM's authorized_keys. Please copy the public key below.
-
-```console
-cat << EOF | sudo tee -a .ssh/authorized_keys
-ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDP3OVBmXaJtHAYNp/FLlcRgbv57HQN+JwbRRdM1aGyl89ueFEhvfXT4VdFg5XsS6Xh/UBOcTbT9WV+iz39cdugI9hoM6o7n/BDHdbBEZ11macVa7DZR2d/OAkY9gzJ2fSs2qDrtFrmQDbBaNoma94ifXTe8cus97knTGK1gMhJqz6ao77Y8fdPPP0KFzR78c7owghkQ2QSx6PvOABZGb1RZTfiG9LzpZG08X8SjLxIPS4uaijQlwreShg3DvQhXIEnQlD6upR1B/ZGj0W719BLABzqeplf165DTATlRMzLXykZk62IGijaVu3BW9e+mQ51hC01V05CijdGmqGkPP+HafE46+4KVA5y5P3LBE09arV3uoeW90vWhdSWmXaXrKh9hM4I1sxNNWHcBe8372iFTiQEk53J20w5Tamr9ccA4RzJbP6L3o3F3McLXBDl88hBG5niB9hH4usv+lMGvKe4nd8reAKiePxnup1G1OFPSachgcl8N4N1ktrjcKdk938= ubuntu@control-plane
-EOF
-```
-
-Switch back to `control-plane` VM.
 Export the Kubernetes configuration and copy that to the `juju-controller` VM:
 
 ```console
-$ sudo microk8s.config > control-plane-cluster.yaml
-$ scp control-plane-cluster.yaml juju-controller.mgmt:
-The authenticity of host 'juju-controller.mgmt (10.201.0.104)' can't be established.
-ED25519 key fingerprint is SHA256:VziKoqhOg/ie+wQu9l84OX4HrnsqfgTkawkd73DPirY.
-This key is not known by any other names
-Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
-Warning: Permanently added 'juju-controller.mgmt' (ED25519) to the list of known hosts.
-control-plane-cluster.yaml 
-```
-
-Change `coredns` configmap by adding local DNS server which is `10.201.0.100`.
-
-Append the following lines in `configmap/coredns` at the end of `Corefile` section.
-
-```yaml
-mgmt:53 {
-    errors
-    cache 30
-    forward . 10.201.0.100
-}
-```
-
-Edit configmap by running:
-
-```console
-microk8s.kubectl -n kube-system edit configmap/coredns
-```
-
-After modification, the configmap looks like the one below:
-
-```yaml
-apiVersion: v1
-data:
-  Corefile: |
-    .:53 {
-        errors
-        health {
-          lameduck 5s
-        }
-        ready
-        log . {
-          class error
-        }
-        kubernetes cluster.local in-addr.arpa ip6.arpa {
-          pods insecure
-          fallthrough in-addr.arpa ip6.arpa
-        }
-        prometheus :9153
-        forward . 8.8.8.8 8.8.4.4
-        cache 30
-        loop
-        reload
-        loadbalance
-    }
-    mgmt:53 {
-        errors
-        cache 30
-        forward . 10.201.0.100
-    }
-kind: ConfigMap
+sudo microk8s.config > control-plane-cluster.yaml
+scp control-plane-cluster.yaml juju-controller.mgmt:
 ```
 
 ### Prepare SD-Core User Plane VM
@@ -797,120 +747,22 @@ sudo microk8s addons repo add community \
     --reference feat/strict-fix-multus
 sudo microk8s enable multus
 sudo usermod -a -G snap_microk8s $USER
-newgrp snap_microk8s
 ```
 
-Generate SSH key pair and copy the public key to `juju-controller` VM.
-
-Create key pair.
+Update MicroK8s DNS to point to our DNS server
 
 ```console
-$ ssh-keygen 
-Generating public/private rsa key pair.
-Enter file in which to save the key (/home/ubuntu/.ssh/id_rsa): 
-Enter passphrase (empty for no passphrase): 
-Enter same passphrase again: 
-Your identification has been saved in /home/ubuntu/.ssh/id_rsa
-Your public key has been saved in /home/ubuntu/.ssh/id_rsa.pub
-The key fingerprint is:
-SHA256:7KO+OPL3hmkmMo8RyidTC8s31Z9G3ExqB7jTX1fg6/c ubuntu@cplane
-The key's randomart image is:
-+---[RSA 3072]----+
-|              .  |
-|        .    . . |
-|       . . .  . .|
-|      ..+ *    ..|
-| ... . +S* + ... |
-|o.+.o  .= + ...  |
-|.*.=   oo+ .  . .|
-|  Oo+.*.o.     ..|
-|  .*+B++.       E|
-+----[SHA256]-----+
+sudo microk8s disable dns
+sudo microk8s enable dns:10.201.0.100
 ```
 
-Open and copy the public key.
+Export the Kubernetes configuration and copy that to the `juju-controller` VM:
 
 ```console
-$ cat .ssh/id_rsa.pub
-ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDF4f0wB/ahrHqmUBiM+7x+gg04V1G3rTMK1VhKUvnntdRqYaEG2iR7V4f0EkwPscHtToPSV9qTVnHir5grtxxexTmfBr4NyiLcrix33I28w0ttRh4Y6k3jTzTlZ7ArN69abgiF2oz9nbzGEqiXho4V39IwSbGyzQzcduWNLMpA5ftXFDT4lB59hDJCPDlRSPe6wxBZ6doNPQemkudoCXXCGbdgCrZlzXFX4G0xoFQqyGCkPgDINpYGad+SvwU7j2JsmsaRNE+GF4S3cjNRChr7wlfijgXpi2a4Psiceg0LiyFMdALQYofQNdFbiUBlyp3lxNv6ph55QerOAO7l5mMdrGIL4xdhDqZnrWUgL5gI8sywQZMOfjm5kbkJiGKYggM8scE4ntWakxXpLcKiiXUvj9Ccou/+xVFK9YFgDP9c/75Y4DJgUrwkCmcJUUqqX94rjUsvMWmSruTKmSAatq1HFCL1W6dGMr4bj9bl7fmPhIYeBOJM0O1VClx0Umb/D2s= ubuntu@user-plane
+sudo microk8s.config > user-plane-cluster.yaml
+scp user-plane-cluster.yaml juju-controller.mgmt:
 ```
 
-Log in to the `juju-controller` VM and add the public key under `.ssh/authorized_keys` file.
-
-```console
-multipass shell juju-controller
-```
-
-Add `user-plane` VM public key under `juju-controller` VM's authorized_keys. Please copy the public key below.
-
-```console
-cat << EOF | sudo tee -a .ssh/authorized_keys
-ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDFG+pjdD5BvmlW/yaJrOzv0g8J9J/jYf98osvym9gZBLB8g/VCfKcOn6g1I1ztOqnz4rjfh3RVYOPG8h0ApfVHOfWxRODeJnwfqPYIl0FTRShx4wRrz+kZBzCJUFKs+mNWJgBA0v5A1GPyv79Z0FbML+ElT6O1j0fRmhERL3aREk26QTvJ8CR8RCnYWhxGmArsK6bm9/89zfmATG33K2hcbRsmCzTkziA5ZOdx1gA//GKAm+zZYnKhZNMzFZMhP6+k33Zq0aho/Es2wWjaNDDMiSYMM5JyeNtHvPlqPhr7/MQQI8iSHUgsQpf39mq7dun8xWn8PMUVUt8eHry+VStI6W1/G4Vj4PHPUH0VEcUSeLMtTYT4i317lA4IRwwJdLsLH9SAATv74os7+lBHnBmIaegxE5UaE8ZisFzflIYHQVoeK3VQEBYZWJDOff0DbKXEoXNBnDfM0GGIHtebNmBK1cQfxXORF7klX1wiw5WTKI9t0gMZwqercGC8+8KjMN0= ubuntu@user-plane
-EOF
-```
-
-Switch back to `user-plane` VM. Export the Kubernetes configuration and copy that to the `juju-controller` VM:
-
-```console
-$ sudo microk8s.config > user-plane-cluster.yaml
-$ scp user-plane-cluster.yaml juju-controller.mgmt:
-The authenticity of host 'juju-controller.mgmt (10.201.0.104)' can't be established.
-ED25519 key fingerprint is SHA256:VziKoqhOg/ie+wQu9l84OX4HrnsqfgTkawkd73DPirY.
-This key is not known by any other names
-Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
-Warning: Permanently added 'juju-controller.mgmt' (ED25519) to the list of known hosts.
-user-plane-cluster.yaml                                                                                                                                     100% 1874     1.0MB/s   00:00    
-```
-
-Change coredns configmap by adding local DNS server which is `10.201.0.100`. Append the following lines in `configmap/coredns` at the end of `Corefile` section.
-
-```yaml
-mgmt:53 {
-    errors
-    cache 30
-    forward . 10.201.0.100
-}
-```
-
-Edit configmap by running:
-
-```console
-microk8s.kubectl -n kube-system edit configmap/coredns
-```
-
-After modification, the configmap looks like the one below:
-
-```yaml
-apiVersion: v1
-data:
-  Corefile: |
-    .:53 {
-        errors
-        health {
-          lameduck 5s
-        }
-        ready
-        log . {
-          class error
-        }
-        kubernetes cluster.local in-addr.arpa ip6.arpa {
-          pods insecure
-          fallthrough in-addr.arpa ip6.arpa
-        }
-        prometheus :9153
-        forward . 8.8.8.8 8.8.4.4
-        cache 30
-        loop
-        reload
-        loadbalance
-    }
-    mgmt:53 {
-        errors
-        cache 30
-        forward . 10.201.0.100
-    }
-kind: ConfigMap
-```
 
 In this guide, the following network interfaces are available on the SD-Core `user-plane` VM:
 
@@ -935,6 +787,8 @@ sudo chmod +x /etc/rc.local
 sudo /etc/rc.local
 ```
 
+Log out of the VM.
+
 ### Prepare gNB Simulator VM
 
 Log in to the `gnbsim` VM.
@@ -953,122 +807,20 @@ sudo microk8s addons repo add community \
     --reference feat/strict-fix-multus
 sudo microk8s enable multus
 sudo usermod -a -G snap_microk8s $USER
-newgrp snap_microk8s
 ```
 
-Generate SSH key pair and copy the public key to `juju-controller` VM.
-
-Create key pair.
+Update MicroK8s DNS to point to our DNS server
 
 ```console
-$ ssh-keygen 
-Generating public/private rsa key pair.
-Enter file in which to save the key (/home/ubuntu/.ssh/id_rsa): 
-Enter passphrase (empty for no passphrase): 
-Enter same passphrase again: 
-Your identification has been saved in /home/ubuntu/.ssh/id_rsa
-Your public key has been saved in /home/ubuntu/.ssh/id_rsa.pub
-The key fingerprint is:
-SHA256:7KO+OPL3hmkmMo8RyidTC8s31Z9G3ExqB7jTX1fg6/c ubuntu@cplane
-The key's randomart image is:
-+---[RSA 3072]----+
-|              .  |
-|        .    . . |
-|       . . .  . .|
-|      ..+ *    ..|
-| ... . +S* + ... |
-|o.+.o  .= + ...  |
-|.*.=   oo+ .  . .|
-|  Oo+.*.o.     ..|
-|  .*+B++.       E|
-+----[SHA256]-----+
+sudo microk8s disable dns
+sudo microk8s enable dns:10.201.0.100
 ```
 
-Open and copy the public key.
-
-```console
-$ cat .ssh/id_rsa.pub
-ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCs6xKaPLaOjX577VE47UuLlsu1bK9Otar2oJZOLFrQuncDEm5GBQrqGxzN1OLfY9zZH4js7gnAFRhGq6R7D8CQckDVZx91g5aawnU4lgaT3ZfgyjNVUjOh7AMjn9aK4Foolp8aZrDgaSR/FFvMAOoBYkvAFBTpFRd0RAeKYxowiUWVo46AwMP/SyhhosV40ahwOm9MXUIvBqlV877ZWUzUNWOHNT3hpB1r286TyViuSZOGjCm8BXooS2zlTnCE2EsQtmzbb5AuqtuI6UBLUtvv/47605caVyGV+aPDWHK7pz014aL7Sh1DduDcs046igGTjNjpGhkCrfASAkaa66I7KEZJfpLa/kwpnqv8bn6mvuXNvaD/+NcFdb1xyxk8bfBl9qsfJ1gKrSide00GwXOLy0aU7YH9KoQavfhF4/OX9q65kl1SfQeukbRRHWhltg8f6MXr+7WBlk7FcAzgCiQZMUhxpZsAv3FQQgiZCN4G20K/2pajEzuEr7NEWLG7W2U= ubuntu@gnbsim
-```
-
-Log in to the `juju-controller` VM and add the public key under `.ssh/authorized_keys` file.
-
-```console
-multipass shell juju-controller
-```
-
-Add `gnbsim` VM public key under `juju-controller` VM's authorized_keys. Please copy the public key below.
-
-```console
-cat << EOF | sudo tee -a .ssh/authorized_keys
-ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC/nTBix19uaBZLRzxelGIz4SsPjJo2njwbu4l5Nn3+gtk1bGgl+m4VRjY2Zd0Mtn1wAoRgqo6OVqG/Dqh/Y69NZ6twpBp9xugrg+7926fwJtMuMoCMdo1GTJhPTJUQmBju0Ek6111bsT4WxHqcbQ9TXit8OPw9F4/QCsVyqxygJuEQJHkNFMrHZMfcwDWAiOsAwHzyt+qpEXMNywZyqGVuTjDj64Ar7zDUjJyf1C2agLTdTbLcHlmgBk8HqeGTZJpKzK7T2F2+RVhfDApEm65hR3NwX6/cjFWVWKXhBONGt9wSY3KuhmRQApQ6Qs03dDojG/+E6V3pM05WLZFlYhSxPnGZ1nujpZVPQLlzVh20HZGlJDtk4cJ986I4E7sNdc1lLd91GJghc5X0tiZvPjtvH9y8xolGJWhT5I3UhT59vUl1yHSjcpNoY9HLLqCiJrxWJuEeoHJ5aBFW5U0O0XeANe7dquyqzU6wOScHObAk2LIOUeZ+drkO4u56mTqBu0k= ubuntu@gnbsim
-EOF
-```
-
-Switch back to `gnbsim` VM.
 Export the Kubernetes configuration and copy that to the `juju-controller` VM:
 
 ```console
-$ sudo microk8s.config > gnb-cluster.yaml
-$ scp gnb-cluster.yaml juju-controller.mgmt:
-The authenticity of host 'juju-controller.mgmt (10.201.0.104)' can't be established.
-ED25519 key fingerprint is SHA256:VziKoqhOg/ie+wQu9l84OX4HrnsqfgTkawkd73DPirY.
-This key is not known by any other names
-Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
-Warning: Permanently added 'juju-controller.mgmt' (ED25519) to the list of known hosts.
-gnb-cluster.yaml
-```
-
-Change coredns configmap by adding local DNS server which is `10.201.0.100`.
-
-Append the following lines in `configmap/coredns` at the end of `Corefile` section.
-
-```yaml
-mgmt:53 {
-    errors
-    cache 30
-    forward . 10.201.0.100
-}
-```
-
-Edit configmap by running:
-
-```console
-microk8s.kubectl -n kube-system edit configmap/coredns
-```
-
-After modification, the configmap looks like the one below:
-
-```yaml
-apiVersion: v1
-data:
-  Corefile: |
-    .:53 {
-        errors
-        health {
-          lameduck 5s
-        }
-        ready
-        log . {
-          class error
-        }
-        kubernetes cluster.local in-addr.arpa ip6.arpa {
-          pods insecure
-          fallthrough in-addr.arpa ip6.arpa
-        }
-        prometheus :9153
-        forward . 8.8.8.8 8.8.4.4
-        cache 30
-        loop
-        reload
-        loadbalance
-    }
-    mgmt:53 {
-        errors
-        cache 30
-        forward . 10.201.0.100
-    }
-kind: ConfigMap
+sudo microk8s.config > gnb-cluster.yaml
+scp gnb-cluster.yaml juju-controller.mgmt:
 ```
 
 In this guide, the following network interfaces are available on the `gnbsim` VM:
@@ -1091,6 +843,8 @@ sudo chmod +x /etc/rc.local
 sudo /etc/rc.local
 ```
 
+Log out of the VM.
+
 ### Prepare the Juju Controller VM
 
 Log in to the `juju-controller` VM.
@@ -1107,6 +861,13 @@ sudo microk8s enable hostpath-storage
 sudo microk8s enable metallb:10.201.0.50-10.201.0.51
 sudo usermod -a -G snap_microk8s $USER
 newgrp snap_microk8s
+```
+
+Update MicroK8s DNS to point to our DNS server
+
+```console
+sudo microk8s disable dns
+sudo microk8s enable dns:10.201.0.100
 ```
 
 Install Juju and bootstrap the controller to the local Microk8s install as a load balancer service. This will expose the Juju controller on the first allocated MetalLB address.
@@ -1128,59 +889,11 @@ export KUBECONFIG=gnb-cluster.yaml
 juju add-k8s gnb-cluster --controller sdcore
 ```
 
-Change coredns configmap by adding local DNS server which is `10.201.0.100`.
+Log out of the VM.
 
-Append the following lines in `configmap/coredns` at the end of `Corefile` section.
-
-```yaml
-mgmt:53 {
-    errors
-    cache 30
-    forward . 10.201.0.100
-}
+```{note}
+Due to the newgrp command you will need to log out twice as it started a new shell.
 ```
-
-Edit configmap by running:
-
-```console
-microk8s.kubectl -n kube-system edit configmap/coredns
-```
-
-After modification, the configmap looks like the one below:
-
-```yaml
-apiVersion: v1
-data:
-  Corefile: |
-    .:53 {
-        errors
-        health {
-          lameduck 5s
-        }
-        ready
-        log . {
-          class error
-        }
-        kubernetes cluster.local in-addr.arpa ip6.arpa {
-          pods insecure
-          fallthrough in-addr.arpa ip6.arpa
-        }
-        prometheus :9153
-        forward . 8.8.8.8 8.8.4.4
-        cache 30
-        loop
-        reload
-        loadbalance
-    }
-    mgmt:53 {
-        errors
-        cache 30
-        forward . 10.201.0.100
-    }
-kind: ConfigMap
-```
-
-You may now proceed to deploy the SD-Core Control Plane and SD-Core User Plane
 
 ## 4. Deploy SD-Core Control Plane
 
@@ -1188,7 +901,13 @@ The following steps build on the Juju controller which was bootstrapped and know
 
 First, create a Juju overlay file that specifies the Access and Mobility Management Function (AMF) host name and IP address for sharing with the radios. This host name must be resolvable by the gNB and the IP address must be reachable and resolve to the AMF unit. In the bootstrap step, we set the Control Plane MetalLB range to start at `10.201.0.52`, so that is what we use in the configuration.
 
-Create the Juju overlay file on the `juju-controller` VM.
+Log into the `juju-controller` VM.
+
+```console
+multipass shell juju-controller
+```
+
+Create the Juju overlay file where we specify the IP address and hostname for the AMF.
 
 ```console
 cat << EOF > control-plane-overlay.yaml
@@ -1241,7 +960,7 @@ control-plane    traefik-k8s   LoadBalancer  10.152.183.28   10.201.0.53   80:32
 
 ## 5. Deploy SD-Core User Plane
 
-Create a Juju model to represent the User Plane, using the cloud `user-plane-cluster`, which was created in the Bootstrap step. The following parameters can be set:
+On the `juju-controller` VM, create an overlay file for the UPF deployment. The following parameters can be set:
 
 - `access-gateway-ip`: this is the IP address of the gateway that knows how to route traffic from the UPF towards the gNB subnet
 - `access-interface`: the name of the MACVLAN interface on the Kubernetes host cluster to bridge to the `access` subnet
@@ -1249,6 +968,7 @@ Create a Juju model to represent the User Plane, using the cloud `user-plane-clu
 - `core-gateway-ip`: this is the IP address of the gateway that knows how to route traffic from the UPF towards the internet
 - `core-interface`: the name of the MACVLAN interface on the Kubernetes host cluster to bridge to the `core` subnet
 - `core-ip`: the IP address for the UPF to use on the `core` subnet
+- `external-upf-hostname`: the DNS name of the UPF
 - `gnb-subnet`: the subnet CIDR where the gNB radios are reachable.
 
 Create the UPF overlay file on the `juju-controller` VM.
@@ -1264,8 +984,8 @@ applications:
       core-gateway-ip: 10.203.0.1
       core-interface: core
       core-ip: 10.203.0.10/24
-      gnb-subnet: 10.204.0.0/24
       external-upf-hostname: upf.mgmt
+      gnb-subnet: 10.204.0.0/24
 EOF
 ```
 
