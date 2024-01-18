@@ -12,10 +12,12 @@ Bitrate
 bootloader
 Charmhub
 CharmHub
+CNI
 CIDR
 CNI
 conf
 config
+ConfigMap
 configmap
 coredns
 Corefile
@@ -32,6 +34,8 @@ Gi
 GiB
 gnb
 gNB
+DN
+DPDK
 gnbsim
 Gnbsim
 gNodeB
@@ -48,6 +52,7 @@ ip
 ICMP
 IMSI
 integrations
+IOMMU
 IOV
 juju
 Juju
@@ -89,6 +94,7 @@ ONF's
 ONOS
 OPC
 PacketPool
+PCI
 PCF
 pdpe
 PDU

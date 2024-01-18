@@ -7,9 +7,10 @@ These how-to guides cover key operations and processes in Charmed 5G.
 ```{toctree}
 :maxdepth: 1
 
-deploy_sdcore_standalone
 deploy_sdcore_cups
 deploy_sdcore_gnbsim
+deploy_sdcore_standalone
+deploy_sdcore_user_plane_in_dpdk_mode
 deploy_sdcore_user_plane_with_hugepages
 integrate_sdcore_with_observability
 ```
