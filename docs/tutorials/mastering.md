@@ -928,7 +928,7 @@ juju add-model control-plane control-plane-cluster
 Deploy the control plane Juju bundle:
 
 ```console
-juju deploy sdcore-control-plane-k8s --trust --channel=beta --overlay control-plane-overlay.yaml
+juju deploy sdcore-control-plane-k8s --trust --channel=1.3/beta --overlay control-plane-overlay.yaml
 ```
 
 Expose the Software as a Service offer for the AMF.
@@ -998,7 +998,7 @@ juju add-model user-plane user-plane-cluster
 Deploy user plane bundle:
 
 ```console
-juju deploy sdcore-user-plane-k8s --trust --channel=beta --overlay upf-overlay.yaml
+juju deploy sdcore-user-plane-k8s --trust --channel=1.3/beta --overlay upf-overlay.yaml
 ```
 
 Now expose the UPF service offering with Juju.
@@ -1039,7 +1039,7 @@ Deploy the simulator to the `gnbsim-cluster`. The simulator needs to know the fo
 - `upf-subnet`: subnet where the UPFs are located (also called Access network)
 
 ```console
-juju deploy sdcore-gnbsim-k8s gnbsim --channel=beta \
+juju deploy sdcore-gnbsim-k8s gnbsim --channel=1.3/beta \
 --config gnb-interface=ran \
 --config gnb-ip-address=10.204.0.10/24 \
 --config icmp-packet-destination=8.8.8.8 \
