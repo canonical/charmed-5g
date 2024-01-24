@@ -73,13 +73,13 @@ juju add-model core
 Deploy the `sdcore-router-k8s` operator:
 
 ```console
-juju deploy sdcore-router-k8s router --trust --channel=beta
+juju deploy sdcore-router-k8s router --trust --channel=1.3/beta
 ```
 
 Deploy the `sdcore-k8s` charm bundle:
 
 ```console
-juju deploy sdcore-k8s --trust --channel=beta
+juju deploy sdcore-k8s --trust --channel=1.3/beta
 ```
 
 Deploying the core network can take up to 15 minutes. You can validate the status of the
@@ -92,23 +92,21 @@ Model  Controller          Cloud/Region        Version  SLA          Timestamp
 core   microk8s-localhost  microk8s/localhost  3.1.6    unsupported  12:58:34-05:00
 
 App                       Version  Status   Scale  Charm                     Channel        Rev  Address         Exposed  Message
-amf                                active       1  sdcore-amf-k8s                edge            57  10.152.183.208  no
-ausf                               active       1  sdcore-ausf-k8s               edge            40  10.152.183.237  no
-gnbsim                             active       1  sdcore-gnbsim-k8s             edge            43  10.152.183.167  no
-grafana-agent-k8s         0.32.1   waiting      1  grafana-agent-k8s             latest/stable   44  10.152.183.245  no       installing agent
-mongodb-k8s                        active       1  mongodb-k8s                   5/edge          36  10.152.183.156  no       Primary
-nms                                active       1  sdcore-nms-k8s                edge            26  10.152.183.121  no
-nrf                                active       1  sdcore-nrf-k8s                edge            62  10.152.183.123  no
-nssf                               active       1  sdcore-nssf-k8s               edge            37  10.152.183.165  no
-pcf                                active       1  sdcore-pcf-k8s                edge            32  10.152.183.205  no
-router                             active       1  sdcore-router-k8s             edge            33  10.152.183.49   no
-self-signed-certificates           active       1  self-signed-certificates      beta            33  10.152.183.153  no
-smf                                active       1  sdcore-smf-k8s                edge            37  10.152.183.147  no
-traefik-k8s               2.10.4   active       1  traefik-k8s                   latest/stable  148  10.0.0.3        no
-udm                                active       1  sdcore-udm-k8s                edge            35  10.152.183.168  no
-udr                                active       1  sdcore-udr-k8s                edge            31  10.152.183.96   no
-upf                                active       1  sdcore-upf-k8s                edge            64  10.152.183.126  no
-webui                              active       1  sdcore-webui-k8s              edge            23  10.152.183.128  no
+amf                                waiting      1  sdcore-amf-k8s            1.3/beta        11  10.152.183.242  no       installing agent
+ausf                               waiting      1  sdcore-ausf-k8s           1.3/beta        10  10.152.183.145  no       installing agent
+grafana-agent-k8s         0.32.1   waiting      1  grafana-agent-k8s         latest/stable   51  10.152.183.172  no       installing agent
+mongodb-k8s                        active       1  mongodb-k8s               5/edge          39  10.152.183.139  no
+nms                                active       1  sdcore-nms-k8s            1.3/beta         9  10.152.183.233  no
+nrf                                waiting      1  sdcore-nrf-k8s            1.3/beta        10  10.152.183.245  no       installing agent
+nssf                               waiting      1  sdcore-nssf-k8s           1.3/beta         7  10.152.183.193  no       installing agent
+pcf                                waiting      1  sdcore-pcf-k8s            1.3/beta         8  10.152.183.41   no       installing agent
+self-signed-certificates           waiting      1  self-signed-certificates  beta            57  10.152.183.134  no       installing agent
+smf                                waiting      1  sdcore-smf-k8s            1.3/beta         7  10.152.183.129  no       installing agent
+traefik-k8s               2.10.4   waiting      1  traefik-k8s               latest/stable  166  10.152.183.109  no       installing agent
+udm                                waiting      1  sdcore-udm-k8s            1.3/beta         8  10.152.183.108  no       installing agent
+udr                                waiting      1  sdcore-udr-k8s            1.3/beta         8  10.152.183.225  no       installing agent
+upf                                active       1  sdcore-upf-k8s            1.3/beta        13  10.152.183.148  no
+webui                              active       1  sdcore-webui-k8s          1.3/beta         6  10.152.183.89   no
 
 Unit                         Workload  Agent  Address      Ports  Message
 amf/0*                       active    idle   10.1.182.23
@@ -135,7 +133,7 @@ webui/0*                     active    idle   10.1.182.33
 Deploy the `sdcore-gnbsim-k8s` operator
 
 ```console
-juju deploy sdcore-gnbsim-k8s gnbsim --trust --channel=beta
+juju deploy sdcore-gnbsim-k8s gnbsim --trust --channel=1.3/beta
 ```
 
 Integrate it to the AMF and the NMS:
