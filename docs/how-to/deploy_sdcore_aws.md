@@ -101,6 +101,7 @@ Create a file `dns.json` with the following content:
   ]
 }
 ```
+> Note: Make sure to replace `<Your hostname>` with your hostname and `<LB Address for the Traefik service>` with the load balancer address for the Traefik service.
 
 Create the CNAME records in Route53:
 

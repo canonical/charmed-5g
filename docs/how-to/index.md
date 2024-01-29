@@ -4,8 +4,6 @@ These how-to guides cover key operations and processes in Charmed 5G.
 
 ## Day 1 operations
 
-### Deploy
-
 ```{toctree}
 :maxdepth: 1
 
