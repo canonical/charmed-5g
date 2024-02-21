@@ -102,7 +102,7 @@ simulator and a router:
 
 ```console
 cd terraform
-cat << EOF > terraform.tf
+cat << EOF > main.tf
 resource "juju_model" "sdcore" {
   name = "sdcore"
 }
