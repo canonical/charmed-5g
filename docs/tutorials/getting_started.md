@@ -252,7 +252,7 @@ Retrieve the NMS address:
 juju run traefik/0 show-proxied-endpoints
 ```
 
-The output should be `http://core-nms.10.0.0.3.nip.io/`. Navigate to this address in your browser.
+The output should be `http://sdcore-nms.10.0.0.3.nip.io/`. Navigate to this address in your browser.
 
 
 ## 7. Configure the 5G core network through the Network Management System
@@ -262,7 +262,7 @@ In the Network Management System (NMS), create a network slice with the followin
 - Name: `default`
 - MCC: `208`
 - MNC: `93`
-- UPF: `upf-external.core.svc.cluster.local:8805`
+- UPF: `upf-external.sdcore.svc.cluster.local:8805`
 - gNodeB: `sdcore-gnbsim-gnbsim`
 
 You should see the following network slice created:
