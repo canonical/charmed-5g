@@ -263,7 +263,7 @@ In the Network Management System (NMS), create a network slice with the followin
 - MCC: `208`
 - MNC: `93`
 - UPF: `upf-external.core.svc.cluster.local:8805`
-- gNodeB: `core-gnbsim-gnbsim`
+- gNodeB: `sdcore-gnbsim-gnbsim`
 
 You should see the following network slice created:
 
