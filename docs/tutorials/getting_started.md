@@ -9,7 +9,8 @@ deployments.
 
 To complete this tutorial, you will need a machine which meets the following requirements:
 
-- A recent `x86_64` CPU (Intel 4ᵗʰ generation or newer or AMD Ryzen or newer)
+- A recent `x86_64` CPU (Intel 4ᵗʰ generation or newer, or AMD Ryzen or newer)
+- At least 4 cores
 - 8GB of RAM
 - 50GB of free disk space
 
