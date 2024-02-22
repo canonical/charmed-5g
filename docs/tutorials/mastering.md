@@ -18,8 +18,8 @@ A machine running Ubuntu 22.04 with the following resources:
 
 The following IP networks will be used to connect and isolate the network functions:
 
-| Name | Subnet | Gateway IP |
-| ---- | ------ | ---------- |
+| Name         | Subnet        | Gateway IP |
+|--------------|---------------|------------|
 | `management` | 10.201.0.0/24 | 10.201.0.1 |
 | `access`     | 10.202.0.0/24 | 10.202.0.1 |
 | `core`       | 10.203.0.0/24 | 10.203.0.1 |
@@ -326,17 +326,17 @@ echo 127.0.0.1 | sudo tee /etc/resolv.conf
 The following IP addresses are used in this tutorial and must be present in the DNS Server
 that all hosts are using:
 
-| Name | IP Address   | Purpose |
-| ---- |--------------| ------- |
-| `juju-controller.mgmt` | 10.201.0.104 | Management address for Juju machine |
-| `control-plane.mgmt` | 10.201.0.101 | Management address for control plane cluster machine |
-| `user-plane.mgmt` | 10.201.0.102 | Management address for user plane cluster machine |
-| `gnbsim.mgmt` | 10.201.0.103 | Management address for the gNB Simulator cluster machine |
-| `api.juju-controller.mgmt` | 10.201.0.50  | Juju controller address |
-| `cos.mgmt` | 10.201.0.51  | Canonical Observability Stack address |
-| `amf.mgmt` | 10.201.0.52  | Externally reachable control plane endpoint for the AMF |
-| `control-plane-nms.control-plane.mgmt` | 10.201.0.53  | Externally reachable control plane endpoint for the NMS |
-| `upf.mgmt` | 10.201.0.200 | Externally reachable control plane endpoint for the UPF |
+| Name                                   | IP Address   | Purpose                                                  |
+|----------------------------------------|--------------|----------------------------------------------------------|
+| `juju-controller.mgmt`                 | 10.201.0.104 | Management address for Juju machine                      |
+| `control-plane.mgmt`                   | 10.201.0.101 | Management address for control plane cluster machine     |
+| `user-plane.mgmt`                      | 10.201.0.102 | Management address for user plane cluster machine        |
+| `gnbsim.mgmt`                          | 10.201.0.103 | Management address for the gNB Simulator cluster machine |
+| `api.juju-controller.mgmt`             | 10.201.0.50  | Juju controller address                                  |
+| `cos.mgmt`                             | 10.201.0.51  | Canonical Observability Stack address                    |
+| `amf.mgmt`                             | 10.201.0.52  | Externally reachable control plane endpoint for the AMF  |
+| `control-plane-nms.control-plane.mgmt` | 10.201.0.53  | Externally reachable control plane endpoint for the NMS  |
+| `upf.mgmt`                             | 10.201.0.200 | Externally reachable control plane endpoint for the UPF  |
 
 Add records under /etc/hosts:
 
@@ -981,8 +981,8 @@ In this guide, the following network interfaces are available on the `gnbsim` VM
 
 | Interface Name | Purpose                                                                         |
 |----------------|---------------------------------------------------------------------------------|
-| enp6s0           | internal Kubernetes management interface. This maps to the `management` subnet. |
-| enp7s0           | ran interface. This maps to the `ran` subnet.                                   |
+| enp6s0         | internal Kubernetes management interface. This maps to the `management` subnet. |
+| enp7s0         | ran interface. This maps to the `ran` subnet.                                   |
 
 Now we create the MACVLAN bridges for `enp7s0`, and label them accordingly:
 
@@ -1107,11 +1107,13 @@ Due to the newgrp command you will need to log out twice as it started a new she
 The following steps build on the Juju controller which was bootstrapped and knows
 how to manage the SD-Core Control Plane Kubernetes cluster.
 
-First, create a Juju overlay file that specifies the Access and Mobility Management Function (AMF)
+First, we will create a new Terraform module which we will use to deploy SD-Core Control Plane.
+In this module we will also specify the Access and Mobility Management Function (AMF)
 host name and IP address for sharing with the radios. This host name must be resolvable
 by the gNB and the IP address must be reachable and resolve to the AMF unit. In the bootstrap step,
 we set the Control Plane MetalLB range to start at `10.201.0.52`, so that is what we use
 in the configuration.
+Lastly, the module will expose the Software as a Service offer for the AMF.
 
 Log into the `juju-controller` VM:
 
@@ -1119,42 +1121,89 @@ Log into the `juju-controller` VM:
 multipass shell juju-controller
 ```
 
-Create the Juju overlay file where we specify the IP address and hostname for the AMF.
-
-```console
-cat << EOF > control-plane-overlay.yaml
-applications:
-  amf:
-    options:
-      external-amf-ip: 10.201.0.52
-      external-amf-hostname: amf.mgmt
-EOF
-```
-
-Next, we create a Juju model to represent the Control Plane, using the cloud `control-plane-cluster`, which was created in the Bootstrap step.
+Create Juju model for the SD-Core Control Plane:
 
 ```console
 juju add-model control-plane control-plane-cluster
 ```
 
-Deploy the control plane Juju bundle:
+Create new folder called `terraform`:
 
 ```console
-juju deploy sdcore-control-plane-k8s --trust --channel=beta --overlay control-plane-overlay.yaml
+mkdir terraform
 ```
 
-Expose the Software as a Service offer for the AMF.
+Inside newly created `terraform` folder create a `terraform.tf` file:
 
 ```console
-juju offer control-plane.amf:fiveg-n2
+cd terraform
 ```
 
-### Checkpoint 3: Does AMF External load balancer service exist ?
+```console
+cat << EOF > terraform.tf
+terraform {
+  required_providers {
+    juju = {
+      source  = "juju/juju"
+      version = "~> 0.10.1"
+    }
+  }
+}
+EOF
+```
 
-You should be able to see the AMF External load balancer service in Kubernetes. Log in to the `control-plane` VM and execute the following command:
+Create Terraform module:
+
+```console
+cat << EOF > main.tf
+module "sdcore-control-plane" {
+  source = "git::https://github.com/canonical/terraform-juju-sdcore-k8s//modules/sdcore-control-plane-k8s"
+
+  model_name   = "control-plane"
+  create_model = false
+
+  amf_config = {
+    external-amf-ip       = "10.201.0.52"
+    external-amf-hostname = "amf.mgmt"
+  }
+  traefik_config = {
+    routing_mode = "subdomain"
+  }
+}
+
+resource "juju_offer" "amf-fiveg-n2" {
+  model            = "control-plane"
+  application_name = module.sdcore-control-plane.amf_app_name
+  endpoint         = module.sdcore-control-plane.fiveg_n2_endpoint
+}
+EOF
+```
+
+Initialize Juju Terraform provider:
+
+```console
+terraform init
+```
+
+Deploy SD-Core Control Plane:
+
+```console
+terraform apply -auto-approve
+```
+
+### Checkpoint 3: Does the AMF external LoadBalancer service exist?
+
+You should be able to see the AMF external LoadBalancer service in Kubernetes. 
+
+Log in to the `control-plane` VM:
 
 ```console
 multipass shell control-plane
+```
+
+Get LoadBalancer services:
+
+```console
 microk8s.kubectl get services -A | grep LoadBalancer
 ```
 
@@ -1172,63 +1221,103 @@ control-plane    traefik-k8s   LoadBalancer  10.152.183.28   10.201.0.53   80:32
 
 ## 5. Deploy SD-Core User Plane
 
-On the `juju-controller` VM, create an overlay file for the UPF deployment. The following parameters can be set:
+The following steps build on the Juju controller which was bootstrapped and knows
+how to manage the SD-Core User Plane Kubernetes cluster.
 
-- `access-gateway-ip`: this is the IP address of the gateway that knows how to route traffic from the UPF towards the gNB subnet
-- `access-interface`: the name of the MACVLAN interface on the Kubernetes host cluster to bridge to the `access` subnet
-- `access-ip`: the IP address for the UPF to use on the `access` subnet
-- `core-gateway-ip`: this is the IP address of the gateway that knows how to route traffic from the UPF towards the internet
-- `core-interface`: the name of the MACVLAN interface on the Kubernetes host cluster to bridge to the `core` subnet
-- `core-ip`: the IP address for the UPF to use on the `core` subnet
-- `external-upf-hostname`: the DNS name of the UPF
-- `gnb-subnet`: the subnet CIDR where the gNB radios are reachable.
+First, we will add SD-Core User Plane to the Terraform module created in the previous step.
+We will provide necessary configuration (please see the list of the config options with 
+the description in the table below) for the User Plane Function (UPF). Lastly, we will expose 
+the Software as a Service offer for the UPF.
 
-Create the UPF overlay file on the `juju-controller` VM.
+| Config Option         | Descriptions                                                                                      |
+|-----------------------|---------------------------------------------------------------------------------------------------|
+| access-gateway-ip     | The IP address of the gateway that knows how to route traffic from the UPF towards the gNB subnet |
+| access-interface      | The name of the MACVLAN interface on the Kubernetes host cluster to bridge to the `access` subnet |
+| access-ip             | The IP address for the UPF to use on the `access` subnet                                          |
+| core-gateway-ip       | The IP address of the gateway that knows how to route traffic from the UPF towards the internet   |
+| core-interface        | The name of the MACVLAN interface on the Kubernetes host cluster to bridge to the `core` subnet   |
+| core-ip               | The IP address for the UPF to use on the `core` subnet                                            |
+| external-upf-hostname | The DNS name of the UPF                                                                           |
+| gnb-subnet            | The subnet CIDR where the gNB radios are reachable.                                               |
+
+Log into the `juju-controller` VM:
 
 ```console
-cat << EOF > upf-overlay.yaml
-applications:
-  upf:
-    options:
-      access-gateway-ip: 10.202.0.1
-      access-interface: access
-      access-ip: 10.202.0.10/24
-      core-gateway-ip: 10.203.0.1
-      core-interface: core
-      core-ip: 10.203.0.10/24
-      external-upf-hostname: upf.mgmt
-      gnb-subnet: 10.204.0.0/24
-EOF
+multipass shell juju-controller
 ```
 
-Next, we create a Juju model to represent the User Plane, using the cloud `user-plane-cluster`, which was created in the Bootstrap step.
+Create Juju model for the SD-Core Control Plane:
 
 ```console
 juju add-model user-plane user-plane-cluster
 ```
 
-Deploy user plane bundle:
+Enter the `terraform` folder created in the previous step:
 
 ```console
-juju deploy sdcore-user-plane-k8s --trust --channel=beta --overlay upf-overlay.yaml
+cd terraform
 ```
 
-Now expose the UPF service offering with Juju.
+Edit the `main.tf` file:
 
 ```console
-juju offer user-plane.upf:fiveg_n4
+cat << EOF >> main.tf
+module "sdcore-user-plane" {
+  source = "git::https://github.com/canonical/terraform-juju-sdcore-k8s//modules/sdcore-user-plane-k8s"
+
+  model_name   = "user-plane"
+  create_model = false
+
+  upf_config = {
+    access-gateway-ip     = "10.202.0.1"
+    access-interface      = "access"
+    access-ip             = "10.202.0.10/24"
+    core-gateway-ip       = "10.203.0.1"
+    core-interface        = "core"
+    core-ip               = "10.203.0.10/24"
+    external-upf-hostname = "upf.mgmt"
+    gnb-subnet            = "10.204.0.0/24"
+  }
+}
+
+resource "juju_offer" "upf-fiveg-n4" {
+  model            = "user-plane"
+  application_name = module.sdcore-user-plane.upf_app_name
+  endpoint         = module.sdcore-user-plane.fiveg_n4_endpoint
+}
+EOF
 ```
 
-### Checkpoint 4: Does UPF External load balancer service exist ?
+Update Juju Terraform provider:
 
-You should be able to see the UPF External load balancer service in Kubernetes. Log in to the `user-plane` VM and display the load balancer service:
+```console
+terraform init
+```
+
+Deploy SD-Core User Plane:
+
+```console
+terraform apply -auto-approve
+```
+
+### Checkpoint 4: Does the UPF external LoadBalancer service exist?
+
+You should be able to see the UPF external LoadBalancer service in Kubernetes.
+
+Log in to the `user-plane` VM:
 
 ```console
 multipass shell user-plane
+```
+
+Get the LoadBalancer service:
+
+```console
 microk8s.kubectl get services -A | grep LoadBalancer
 ```
 
-This should produce output similar to the following indicating that the PFCP agent of the UPF is exposed on `10.201.0.200` UDP port 8805
+This should produce output similar to the following indicating that the PFCP agent 
+of the UPF is exposed on `10.201.0.200` UDP port 8805:
 
 ```console
 user-plane  upf-external  LoadBalancer  10.152.183.126  10.201.0.200  8805:31101/UDP
@@ -1236,74 +1325,171 @@ user-plane  upf-external  LoadBalancer  10.152.183.126  10.201.0.200  8805:31101
 
 ## 6. Deploy the gNB Simulator
 
-Create a new Juju model named `gnbsim` on the `juju-controller` VM:
+The following steps build on the Juju controller which was bootstrapped and knows
+how to manage the gNB Simulator Kubernetes cluster.
+
+First, we will add gNB Simulator to the Terraform module used in the previous steps.
+We will provide necessary configuration (please see the list of the config options with
+the description in the table below) for the application and integrate the simulator with previously
+exposed AMF offering. Lastly, we will expose the Software as a Service offer for the simulator.
+
+| Config Option           | Descriptions                                                                                                                                  |
+|-------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
+| gnb-interface           | The name of the MACVLAN interface to use on the host                                                                                          |
+| gnb-ip-address          | The IP address to use on the gnb interface                                                                                                    |
+| icmp-packet-destination | The target IP address to ping. If there is no egress to the internet on your core network, any IP that is reachable from the UPF should work. |
+| upf-gateway             | The IP address of the gateway between the RAN and Access networks                                                                             |
+| upf-subnet              | Subnet where the UPFs are located (also called Access network)                                                                                |
+
+Log into the `juju-controller` VM:
+
+```console
+multipass shell juju-controller
+```
+
+Create Juju model for the SD-Core Control Plane:
 
 ```console
 juju add-model gnbsim gnb-cluster
 ```
 
-Deploy the simulator to the `gnbsim-cluster`. The simulator needs to know the following:
-
-- `gnb-interface`: the name of the MACVLAN interface to use on the host
-- `gnb-ip-address`: the IP address to use on the gnb interface
-- `icmp-packet-destination`: the target IP address to ping. If there is no egress to the internet on your core network, any IP that is reachable from the UPF should work.
-- `upf-gateway`: the IP address of the gateway between the RAN and Access networks
-- `upf-subnet`: subnet where the UPFs are located (also called Access network)
+Enter the `terraform` folder created in the previous step:
 
 ```console
-juju deploy sdcore-gnbsim-k8s gnbsim --channel=beta \
---config gnb-interface=ran \
---config gnb-ip-address=10.204.0.10/24 \
---config icmp-packet-destination=8.8.8.8 \
---config upf-gateway=10.204.0.1 \
---config upf-subnet=10.202.0.0/24
+cd terraform
 ```
 
-Now we use the integration between the gnbsim operator and the AMF operator to exchange the AMF location information.
+Edit the `main.tf` file:
 
 ```console
-juju consume control-plane.amf
-juju integrate gnbsim:fiveg-n2 amf:fiveg-n2
+cat << EOF >> main.tf
+module "gnbsim" {
+  source = "git::https://github.com/canonical/sdcore-gnbsim-k8s-operator//terraform"
+
+  model_name = "gnbsim"
+  
+  config = {
+    gnb-interface           = "ran"
+    gnb-ip-address          = "10.204.0.10/24"
+    icmp-packet-destination = "8.8.8.8"
+    upf-gateway             = "10.204.0.1"
+    upf-subnet              = "10.202.0.0/24"
+  }
+}
+
+resource "juju_integration" "gnbsim-amf" {
+  model = "gnbsim"
+
+  application {
+    name     = module.gnbsim.app_name
+    endpoint = module.gnbsim.fiveg_n2_endpoint
+  }
+
+  application {
+    offer_url = juju_offer.amf-fiveg-n2.url
+  }
+}
+
+resource "juju_offer" "gnbsim-fiveg-gnb-identity" {
+  model            = "gnbsim"
+  application_name = module.gnbsim.app_name
+  endpoint         = module.gnbsim.fiveg_gnb_identity_endpoint
+}
+EOF
 ```
 
-And present the offering of the gNB identity for integrating with the NMS.
+Update Juju Terraform provider:
 
 ```console
-juju offer gnbsim.gnbsim:fiveg_gnb_identity
+terraform init
+```
+
+Deploy SD-Core User Plane:
+
+```console
+terraform apply -auto-approve
 ```
 
 ## 7. Configure SD-Core
 
-Still on the `juju-controller` VM, switch to the `control-plane` model.
+The following steps show how to configure the SD-Core 5G core network.
+
+First, we will create integrations between the Network Management System (NMS) and the UPF
+and the gNB Simulator. Next we will configure Traefik to expose the NMS. Lastly, we will create
+the core network configuration: a network slice, a device group and a subscriber.
+
+Add required integrations to the `main.tf` file used in the previous steps:
+
+```console
+cat << EOF >> main.tf
+resource "juju_integration" "nms-gnbsim" {
+  model = "control-plane"
+
+  application {
+    name     = module.sdcore-control-plane.nms_app_name
+    endpoint = module.sdcore-control-plane.fiveg_gnb_identity_endpoint
+  }
+
+  application {
+    offer_url = juju_offer.gnbsim-fiveg-gnb-identity.url
+  }
+}
+
+resource "juju_integration" "nms-upf" {
+  model = "control-plane"
+
+  application {
+    name     = module.sdcore-control-plane.nms_app_name
+    endpoint = module.sdcore-control-plane.fiveg_n4_endpoint
+  }
+
+  application {
+    offer_url = juju_offer.upf-fiveg-n4.url
+  }
+}
+EOF
+```
+
+Configure Traefik to use an external hostname. To do that, edit `traefik_config`
+in the `main.tf` file:
+
+```console
+:caption: main.tf
+(...)
+module "sdcore-control-plane" {
+  (...)
+  traefik_config = {
+    routing_mode      = "subdomain"
+    external_hostname = "10.201.0.53.nip.io"
+  }
+  (...)
+}
+(...)
+```
+
+Apply the changes:
+
+```console
+terraform apply -auto-approve
+```
+
+```{note}
+Replace `10.201.0.53` with the Application IP address of the `traefik` application. 
+You can find it by running `juju status traefik` in the `control-plane` Juju model.
+```
+
+Retrieve the NMS address:
 
 ```console
 juju switch control-plane
 ```
 
-Relate the UPF to the NMS for exchanging identity information.
-
 ```console
-juju consume user-plane.upf
-juju integrate upf:fiveg_n4 nms:fiveg_n4
-juju consume gnbsim.gnbsim
-juju integrate gnbsim:fiveg_gnb_identity nms:fiveg_gnb_identity
+juju run traefik/0 show-proxied-endpoints
 ```
 
-Configure Traefik to use an external hostname:
-
-```console
-juju config traefik-k8s external_hostname=10.201.0.53.nip.io
-```
-
-Here, replace `10.201.0.53` with the Application IP address of the `traefik-k8s` application. You can find it by running `juju status traefik-k8s`.
-
-Retrieve the NMS address:
-
-```console
-juju run traefik-k8s/0 show-proxied-endpoints
-```
-
-The output should be `http://control-plane-nms.10.201.0.53.nip.io/`. Navigate to this address in your browser.
+The output should be `http://control-plane-nms.10.201.0.53.nip.io/`. Navigate to this address 
+in your browser.
 
 In the Network Management System (NMS), create a network slice with the following attributes:
 
@@ -1313,14 +1499,16 @@ In the Network Management System (NMS), create a network slice with the followin
 - UPF: `upf.mgmt:8805`
 - gNodeB: `gnbsim-gnbsim-gnbsim (tac:1)`
 
-You should see the following network slice created. Note the device group has been expanded to show the default group that is created in the slice for you.
+You should see the following network slice created. Note the device group has been expanded 
+to show the default group that is created in the slice for you.
 
 ```{image} ../images/nms_tutorial_network_slice_with_device_group.png
 :alt: NMS Network Slice
 :align: center
 ```
 
-We will now add a subscriber with the IMSI that was provided to the gNB simulator. Navigate to Subscribers and click on Create. Fill in the following:
+We will now add a subscriber with the IMSI that was provided to the gNB simulator. Navigate 
+to Subscribers and click on Create. Fill in the following:
 
 - IMSI: `208930100007487`
 - OPC: `981d464c7c52eb6e5036234984ad0bcf`
