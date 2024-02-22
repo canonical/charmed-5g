@@ -119,6 +119,10 @@ module "sdcore" {
 
   model_name = juju_model.sdcore.name
   create_model = false
+  
+  traefik_config = {
+    routing_mode = "subdomain"
+  }
 
   depends_on = [module.sdcore-router]
 }
@@ -209,7 +213,7 @@ pcf                                active       1  sdcore-pcf-k8s               
 router                             active       1  sdcore-router-k8s             1.3/edge            33  10.152.183.49    no
 self-signed-certificates           active       1  self-signed-certificates      1.3/edge            33  10.152.183.153   no
 smf                                active       1  sdcore-smf-k8s                1.3/edge            37  10.152.183.147   no
-traefik                   2.10.4   active       1  traefik-k8s                   latest/stable      148  10.0.0.3         no
+traefik                   2.10.4   active       1  traefik-k8s                   latest/stable      148  10.0.0.4         no
 udm                                active       1  sdcore-udm-k8s                1.3/edge            35  10.152.183.168   no
 udr                                active       1  sdcore-udr-k8s                1.3/edge            31  10.152.183.96    no
 upf                                active       1  sdcore-upf-k8s                1.3/edge            64  10.152.183.126   no
@@ -237,14 +241,33 @@ webui/0*                     active    idle   10.1.182.33
 
 ## 6. Configure the ingress
 
-Configure Traefik to use an external hostname:
+Configure Traefik to use an external hostname. To do that, edit `traefik_config` 
+in the `main.tf` file:
 
-```console
-juju config traefik external_hostname=10.0.0.3.nip.io
+```
+:caption: main.tf
+(...)
+module "sdcore" {
+  (...)
+  traefik_config = {
+    routing_mode      = "subdomain"
+    external_hostname = "10.0.0.4.nip.io"
+  }
+  (...)
+}
+(...)
 ```
 
-Here, replace `10.0.0.3` with the Application IP address of the `traefik` application. 
+Apply new cofiguration:
+
+```console
+terraform apply -auto-approve
+```
+
+```{note}
+Replace `10.0.0.4` with the Application IP address of the `traefik` application. 
 You can find it by running `juju status traefik`.
+```
 
 Retrieve the NMS address:
 
@@ -252,7 +275,8 @@ Retrieve the NMS address:
 juju run traefik/0 show-proxied-endpoints
 ```
 
-The output should be `http://sdcore-nms.10.0.0.3.nip.io/`. Navigate to this address in your browser.
+The output should be `http://sdcore-nms.10.0.0.4.nip.io/`. Navigate to this address in your 
+browser.
 
 
 ## 7. Configure the 5G core network through the Network Management System
@@ -308,6 +332,18 @@ success: "true"
 ```
 
 ## 9. Destroy the environment
+
+Destroy Terraform deployment:
+
+```console
+terraform destroy -auto-approve
+```
+
+```{note}
+Terraform does not remove anything from the working directory. If needed, please clean up
+the `terraform` folder manually by removing everyting except for the `main.tf` and `terraform.tf`
+files.
+```
 
 Destroy the Juju controller and all its models:
 

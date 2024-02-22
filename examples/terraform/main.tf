@@ -18,6 +18,11 @@ module "sdcore" {
   model_name = juju_model.sdcore.name
   create_model = false
 
+  traefik_config = {
+    routing_mode      = "subdomain"
+    external_hostname = "10.0.0.3.nip.io"
+  }
+
   depends_on = [module.sdcore-router]
 }
 
