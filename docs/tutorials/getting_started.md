@@ -258,7 +258,7 @@ module "sdcore" {
 (...)
 ```
 
-Apply new cofiguration:
+Apply new configuration:
 
 ```console
 terraform apply -auto-approve
@@ -341,7 +341,7 @@ terraform destroy -auto-approve
 
 ```{note}
 Terraform does not remove anything from the working directory. If needed, please clean up
-the `terraform` folder manually by removing everyting except for the `main.tf` and `terraform.tf`
+the `terraform` folder manually by removing everything except for the `main.tf` and `terraform.tf`
 files.
 ```
 
