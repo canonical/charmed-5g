@@ -1517,84 +1517,153 @@ to Subscribers and click on Create. Fill in the following:
 - Network Slice: `Tutorial`
 - Device Group: `Tutorial-default`
 
-## 8. Integrate SD-Core with Observability
+## 8. Integrate SD-Core with the Canonical Observability Stack (COS)
 
-We will integrate the 5G core network with the Canonical Observability Stack (COS). All commands are to be executed on the `juju-controller` VM.
+The following steps show how to integrate the SD-Core 5G core network with the Canonical 
+Observability Stack (COS).
 
-### Deploy the `cos-lite` bundle
+First, we will add COS to the Terraform module used in the previous steps. Next, we will expose
+the Software as a Service offers for the COS and create integrations with SD-Core 5G core network
+components.
 
-Create a new Juju model named `cos` on the `juju-controller` cloud:
+### Deploy COS Lite
+
+Add `cos-lite` Terraform module to the `main.tf` file used in the previous steps:
 
 ```console
-juju add-model cos microk8s
+cat << EOF >> main.tf
+module "cos-lite" {
+  source = "git::https://github.com/canonical/terraform-juju-sdcore-k8s//modules/external/cos-lite"
+
+  model_name               = "cos-lite"
+  deploy_cos_configuration = true
+  cos_configuration_config = {
+    git_repo                 = "https://github.com/canonical/sdcore-cos-configuration"
+    git_branch               = "main"
+    grafana_dashboards_path  = "grafana_dashboards/sdcore/"
+  }
+}
+EOF
 ```
 
-Deploy the `cos-lite` charm bundle. As this is being deployed to the Juju controller's Kubernetes, it will use the second MetalLB IP address (`10.201.0.51`) as its external IP.
+Expose the Software as a Service offers for the COS:
 
 ```console
-juju deploy cos-lite --trust
+cat << EOF >> main.tf
+resource "juju_offer" "prometheus-remote-write" {
+  model            = module.cos-lite.model_name
+  application_name = module.cos-lite.prometheus_app_name
+  endpoint         = "receive-remote-write"
+}
+
+resource "juju_offer" "loki-logging" {
+  model            = module.cos-lite.model_name
+  application_name = module.cos-lite.loki_app_name
+  endpoint         = "logging"
+}
+EOF
 ```
 
-You can validate the status of the deployment by running `juju status`. COS is ready when all the charms are in the `Active/Idle` state.
-
-### Deploy the `cos-configuration-k8s` charm
-
-Deploy the `cos-configuration-k8s` charm with the following SD-Core COS configuration:
+Update Juju Terraform provider:
 
 ```console
-juju deploy cos-configuration-k8s \
-  --config git_repo=https://github.com/canonical/sdcore-cos-configuration \
-  --config git_branch=main \
-  --config git_depth=1 \
-  --config grafana_dashboards_path=grafana_dashboards/sdcore/
+terraform init
 ```
 
-Integrate it to Grafana:
+Deploy COS:
 
 ```console
-juju integrate cos-configuration-k8s grafana
+terraform apply -auto-approve
 ```
 
-### Integrate Grafana Agent with Prometheus
-
-First, offer the following integrations from Prometheus and Loki for use in other models on the `juju-controller` VM:
+Monitor the status of the deployment:
 
 ```console
-juju offer cos.prometheus:receive-remote-write
-juju offer cos.loki:logging
+juju switch cos-lite
 ```
 
-Then, consume the integrations from the `control-plane` model:
-
 ```console
-juju switch control-plane
-juju consume cos.prometheus
-juju consume cos.loki
+watch -n 1 -c juju status --color --relations
 ```
 
-Integrate `grafana-agent-k8s` (in the `control-plane` model) with `prometheus` and `loki` (in the `cos` model):
+The deployment is ready when all the charms are in the `Active/Idle` state.
+
+### Integrate SD-Core with COS Lite
+
+Once the COS deployment is ready, add integrations between SD-Core and COS applications
+to the `main.tf` file:
 
 ```console
-juju integrate prometheus:receive-remote-write grafana-agent-k8s:send-remote-write
-juju integrate loki:logging grafana-agent-k8s:logging-consumer
+cat << EOF >> main.tf
+resource "juju_integration" "control-plane-prometheus" {
+  model = "control-plane"
+
+  application {
+    name     = module.sdcore-control-plane.grafana_agent_app_name
+    endpoint = module.sdcore-control-plane.send_remote_write_endpoint
+  }
+
+  application {
+    offer_url = juju_offer.prometheus-remote-write.url
+  }
+}
+
+resource "juju_integration" "control-plane-loki" {
+  model = "control-plane"
+
+  application {
+    name     = module.sdcore-control-plane.grafana_agent_app_name
+    endpoint = module.sdcore-control-plane.logging_consumer_endpoint
+  }
+
+  application {
+    offer_url = juju_offer.loki-logging.url
+  }
+}
+
+resource "juju_integration" "user-plane-prometheus" {
+  model = "user-plane"
+
+  application {
+    name     = module.sdcore-user-plane.grafana_agent_app_name
+    endpoint = module.sdcore-user-plane.send_remote_write_endpoint
+  }
+
+  application {
+    offer_url = juju_offer.prometheus-remote-write.url
+  }
+}
+
+resource "juju_integration" "user-plane-loki" {
+  model = "user-plane"
+
+  application {
+    name     = module.sdcore-user-plane.grafana_agent_app_name
+    endpoint = module.sdcore-user-plane.logging_consumer_endpoint
+  }
+
+  application {
+    offer_url = juju_offer.loki-logging.url
+  }
+}
+EOF
 ```
 
-Now, do the same for the `user-plane` model:
+Apply the changes:
 
 ```console
-juju switch user-plane
-juju consume cos.prometheus
-juju consume cos.loki
-juju integrate prometheus:receive-remote-write grafana-agent-k8s:send-remote-write
-juju integrate loki:logging grafana-agent-k8s:logging-consumer
+terraform apply -auto-approve
 ```
 
-### Login to Grafana
+## Checkpoint 5: Is Grafana dashboard available?
 
-Retrieve the Grafana admin password on the `juju-controller` VM:
+From the `juju-controller` VM, retrieve the Grafana URL and admin password:
 
 ```console
-juju switch cos
+juju switch cos-lite
+```
+
+```console
 juju run grafana/leader get-admin-password
 ```
 
@@ -1606,15 +1675,20 @@ Running operation 1 with 1 task
 
 Waiting for task 2...
 admin-password: c72uEq8FyGRo
-url: http://10.201.0.51/cos-grafana
-
+url: http://10.201.0.51/cos-lite-grafana
 ```
 
-## Checkpoint 5: Is Grafana dashboard available ?
+```{note}
+Due to a bug in Traefik, the URL returned by the command shown above, shows invalid `http`
+protocol. To address Grafana, please use `https`.
+```
 
-In your browser, navigate to the URL from the output (`https://10.201.0.51/cos-grafana`). Login using the "admin" username and the admin password provided in the last command. Click on "Dashboards" -> "Browse" and select "5G Network Overview".
+In your browser, navigate to the URL from the output (`https://10.201.0.51/cos-grafana`). Login 
+using the "admin" username and the admin password provided in the last command. Click 
+on "Dashboards" -> "Browse" and select "5G Network Overview".
 
-This dashboard presents an overview of your 5G Network status. Keep this page open, we will revisit it shortly.
+This dashboard presents an overview of your 5G Network status. Keep this page open, 
+we will revisit it shortly.
 
 ```{image} ../images/grafana_5g_dashboard_sim_before.png
 :alt: Initial Grafana dashboard showing UPF status
@@ -1648,7 +1722,8 @@ info: run juju debug-log to get more information.
 success: "true"
 ```
 
-## Checkpoint 6: Check the simulation logs to see the communication between elements and the data exchange
+## Checkpoint 6: Check the simulation logs to see the communication between elements and the data 
+exchange
 
 ### gNB Simulation Logs
 
@@ -1664,7 +1739,10 @@ This will emit the full log of the simulation starting with the following messag
 unit-gnbsim-0: 16:43:50 INFO unit.gnbsim/0.juju-log gnbsim simulation output:
 ```
 
-As there is a lot of output, we can better understand if we filter by specific elements. For example, let's take a look at the control plane transport of the log. To do that, we search for `ControlPlaneTransport` in the Juju debug-log. This shows the simulator locating the AMF and exchanging data with it.
+As there is a lot of output, we can better understand if we filter by specific elements. 
+For example, let's take a look at the control plane transport of the log. To do that, 
+we search for `ControlPlaneTransport` in the Juju debug-log. This shows the simulator locating 
+the AMF and exchanging data with it.
 
 ```console
 $ juju debug-log | grep ControlPlaneTransport
@@ -1673,7 +1751,9 @@ $ juju debug-log | grep ControlPlaneTransport
 ...
 ```
 
-We can do the same for the user plane transport to see it starts on the RAN network with IP address `10.204.0.10` as we requested, and it is communicating with our UPF at `10.202.0.10` as expected.
+We can do the same for the user plane transport to see it starts on the RAN network 
+with IP address `10.204.0.10` as we requested, and it is communicating with our UPF
+at `10.202.0.10` as expected.
 
 To follow the UE itself, we can filter by the IMSI.
 
@@ -1683,7 +1763,8 @@ juju debug-log | grep imsi-208930100007487
 
 ### Control Plane Logs
 
-You may view the control plane logs by logging into the control plane cluster and using Kubernetes commands as follows:
+You may view the control plane logs by logging into the control plane cluster and using Kubernetes 
+commands as follows:
 
 ```bash
 microk8s.kubectl logs -n control-plane -c amf amf-0 --tail 70
@@ -1700,7 +1781,9 @@ microk8s.kubectl logs -n control-plane -c udr udr-0 --tail 70
 
 ### Grafana Metrics
 
-You can also revisit the Grafana dashboard to view the metrics for the test run. You can see the IMSI is connected and has received an IP address. There is now one active PDU session, and the ping test throughput can be seen in the graphs.
+You can also revisit the Grafana dashboard to view the metrics for the test run. You can see
+the IMSI is connected and has received an IP address. There is now one active PDU session, 
+and the ping test throughput can be seen in the graphs.
 
 ```{image} ../images/grafana_5g_dashboard_sim_after.png
 :alt: Grafana dashboard showing throughput metrics
@@ -1709,11 +1792,13 @@ You can also revisit the Grafana dashboard to view the metrics for the test run.
 
 ## 10. Review
 
-We have deployed 4 Kubernetes clusters, bootstrapped a Juju controller to manage them all, and deployed portions of the Charmed 5g SD-Core software according to CUPS principles. You know have 5 Juju models as follows
+We have deployed 4 Kubernetes clusters, bootstrapped a Juju controller to manage them all, 
+and deployed portions of the Charmed 5G SD-Core software according to CUPS principles. You now 
+have 5 Juju models as follows:
 
 - `control-plane` where all the control functions are deployed
 - `controller` where Juju manages state of the models
-- `cos` where the Canonical Observability Stack is deployed
+- `cos-lite` where the Canonical Observability Stack is deployed
 - `gnbsim` where the gNB simulator is deployed
 - `user-plane` where all the user plane function is deployed
 
@@ -1726,7 +1811,8 @@ You have learned how to:
 
 ## 11. Cleaning up
 
-Juju makes it simple to cleanly remove all the deployed applications by simply removing the model itself. To completely remove all deployments, use the following:
+Juju makes it simple to cleanly remove all the deployed applications by simply removing the model 
+itself. To completely remove all deployments, use the following:
 
 ```bash
 juju destroy-controller --destroy-all-models sdcore --destroy-storage
@@ -1763,10 +1849,12 @@ Remove the initially created projects and store pool from the LXD:
 ```console
 lxc project delete sdcore
 lxc project delete multipass
+lxc profile delete sdcore
 lxc storage delete sdcore
 ```
 
-Delete the local network bridges that are created for LXD. Remove the configuration file from the host machine and apply the network configuration:
+Delete the local network bridges that are created for LXD. Remove the configuration file from 
+the host machine and apply the network configuration:
 
 ```console
 sudo rm /etc/netplan/99-sdcore-networks.yaml

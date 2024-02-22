@@ -46,6 +46,18 @@ module "gnbsim" {
   }
 }
 
+module "cos-lite" {
+  source = "git::https://github.com/canonical/terraform-juju-sdcore-k8s//modules/external/cos-lite"
+
+  model_name               = "cos-lite"
+  deploy_cos_configuration = true
+  cos_configuration_config = {
+    git_repo                 = "https://github.com/canonical/sdcore-cos-configuration"
+    git_branch               = "main"
+    grafana_dashboards_path  = "grafana_dashboards/sdcore/"
+  }
+}
+
 resource "juju_offer" "amf-fiveg-n2" {
   model            = "control-plane"
   application_name = module.sdcore-control-plane.amf_app_name
@@ -62,6 +74,18 @@ resource "juju_offer" "gnbsim-fiveg-gnb-identity" {
   model            = "gnbsim"
   application_name = module.gnbsim.app_name
   endpoint         = module.gnbsim.fiveg_gnb_identity_endpoint
+}
+
+resource "juju_offer" "prometheus-remote-write" {
+  model            = module.cos-lite.model_name
+  application_name = module.cos-lite.prometheus_app_name
+  endpoint         = "receive-remote-write"
+}
+
+resource "juju_offer" "loki-logging" {
+  model            = module.cos-lite.model_name
+  application_name = module.cos-lite.loki_app_name
+  endpoint         = "logging"
 }
 
 resource "juju_integration" "gnbsim-amf" {
@@ -100,5 +124,57 @@ resource "juju_integration" "nms-upf" {
 
   application {
     offer_url = juju_offer.upf-fiveg-n4.url
+  }
+}
+
+resource "juju_integration" "control-plane-prometheus" {
+  model = "control-plane"
+
+  application {
+    name     = module.sdcore-control-plane.grafana_agent_app_name
+    endpoint = module.sdcore-control-plane.send_remote_write_endpoint
+  }
+
+  application {
+    offer_url = juju_offer.prometheus-remote-write.url
+  }
+}
+
+resource "juju_integration" "control-plane-loki" {
+  model = "control-plane"
+
+  application {
+    name     = module.sdcore-control-plane.grafana_agent_app_name
+    endpoint = module.sdcore-control-plane.logging_consumer_endpoint
+  }
+
+  application {
+    offer_url = juju_offer.loki-logging.url
+  }
+}
+
+resource "juju_integration" "user-plane-prometheus" {
+  model = "user-plane"
+
+  application {
+    name     = module.sdcore-user-plane.grafana_agent_app_name
+    endpoint = module.sdcore-user-plane.send_remote_write_endpoint
+  }
+
+  application {
+    offer_url = juju_offer.prometheus-remote-write.url
+  }
+}
+
+resource "juju_integration" "user-plane-loki" {
+  model = "user-plane"
+
+  application {
+    name     = module.sdcore-user-plane.grafana_agent_app_name
+    endpoint = module.sdcore-user-plane.logging_consumer_endpoint
+  }
+
+  application {
+    offer_url = juju_offer.loki-logging.url
   }
 }
