@@ -75,13 +75,13 @@ sudo snap install terraform --classic
 
 ## 4. Create Terraform module
 
-On the host machine create a new folder called `terraform`:
+On the host machine create a new directory called `terraform`:
 
 ```console
 mkdir terraform
 ```
 
-Inside newly created `terraform` folder create a `terraform.tf` file:
+Inside newly created `terraform` directory create a `terraform.tf` file:
 
 ```console
 cd terraform
@@ -166,7 +166,7 @@ EOF
 
 ```{note}
 You can get a ready example by cloning [this Git repository](https://github.com/canonical/charmed-5g).
-All necessary files are in the `examples/terraform` folder.
+All necessary files are in the `examples/terraform` directory.
 ```
 
 ## 5. Deploy SD-Core
@@ -341,8 +341,8 @@ terraform destroy -auto-approve
 
 ```{note}
 Terraform does not remove anything from the working directory. If needed, please clean up
-the `terraform` folder manually by removing everything except for the `main.tf` and `terraform.tf`
-files.
+the `terraform` directory manually by removing everything except for the `main.tf` 
+and `terraform.tf` files.
 ```
 
 Destroy the Juju controller and all its models:
