@@ -45,6 +45,7 @@ hugepages
 HugePages
 init
 ip
+icmp
 ICMP
 IMSI
 integrations
@@ -106,6 +107,7 @@ subnet
 subnets
 systemd
 TCP
+Terraform
 TLS
 Traefik
 UDM
@@ -113,6 +115,7 @@ UDP
 UDR
 UE
 unsecure
+upf
 UPF
 UPFs
 vCPUs
