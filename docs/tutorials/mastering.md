@@ -220,7 +220,7 @@ multipass launch -c 1 -m 1G -d 10G -n ran-access-router --network mgmt-br --netw
 multipass launch -c 1 -m 1G -d 10G -n core-router --network mgmt-br --network core-br jammy
 ```
 
-Wait until all VMs are in a `Running` state.
+Wait until all the VMs are in a `Running` state.
 
 ### Checkpoint 1: Are the VM's ready ?
 
@@ -362,10 +362,15 @@ sudo systemctl restart dnsmasq
 
 ### Checkpoint 2: Is the DNS server running properly?
 
-You should expect to see the `dnsmasq` service up and running:
+Check the status of the `dnsmasq` service:
 
 ```console
-$ sudo systemctl status dnsmasq
+sudo systemctl status dnsmasq
+```
+
+The expected result should be similar to the below:
+
+```console
 dnsmasq.service - dnsmasq - A lightweight DHCP and caching DNS server
      Loaded: loaded (/lib/systemd/system/dnsmasq.service; enabled; vendor preset: enabled)
      Active: active (running) since Thu 2024-01-11 13:46:34 +03; 6ms ago
@@ -380,7 +385,7 @@ Test the DNS resolution:
 host upf.mgmt
 ```
 
-You should see `user-plane.mgmt has address 10.201.0.200`
+You should see `upf.mgmt has address 10.201.0.200`.
 
 Log out of the VM.
 
@@ -442,7 +447,12 @@ sudo netplan apply
 Check the current DNS server:
 
 ```console
-$ resolvectl
+resolvectl
+```
+
+You should see the new DNS server on `Link 3`:
+
+```console
 Link 3 (enp6s0)
 Current Scopes: DNS
      Protocols: +DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
@@ -796,7 +806,7 @@ multipass shell control-plane
 Install MicroK8s:
 
 ```console
-sudo snap install microk8s --channel=1.27-strict/stable
+sudo snap install microk8s --channel=1.28-strict/stable
 ```
 
 ```console
@@ -848,7 +858,7 @@ Install MicroK8s, configure MetalLB to expose 1 IP address for the UPF (`10.201.
 and enable the Multus plugin:
 
 ```console
-sudo snap install microk8s --channel=1.27-strict/stable
+sudo snap install microk8s --channel=1.28-strict/stable
 ```
 
 ```console
@@ -936,7 +946,7 @@ multipass shell gnbsim
 Install MicroK8s and add the Multus plugin:
 
 ```console
-sudo snap install microk8s --channel=1.27-strict/stable
+sudo snap install microk8s --channel=1.28-strict/stable
 ```
 
 ```console
@@ -1018,7 +1028,7 @@ one IP address for the controller (`10.201.0.50`) and one
 for the Canonical Observability Stack (`10.201.0.51)`:
 
 ```console
-sudo snap install microk8s --channel=1.27-strict/stable
+sudo snap install microk8s --channel=1.28-strict/stable
 ```
 
 ```console
@@ -1176,6 +1186,7 @@ resource "juju_offer" "amf-fiveg-n2" {
   application_name = module.sdcore-control-plane.amf_app_name
   endpoint         = module.sdcore-control-plane.fiveg_n2_endpoint
 }
+
 EOF
 ```
 
@@ -1190,6 +1201,17 @@ Deploy SD-Core Control Plane:
 ```console
 terraform apply -auto-approve
 ```
+
+Monitor the status of the deployment:
+
+```console
+watch -n 1 -c juju status --color --relations
+```
+
+The deployment is ready when all the charms are in the `Active/Idle` state. It is normal
+for `grafana-agent` to remain in waiting state.
+
+Log out of the VM.
 
 ### Checkpoint 3: Does the AMF external LoadBalancer service exist?
 
@@ -1269,6 +1291,7 @@ module "sdcore-user-plane" {
   create_model = false
 
   upf_config = {
+    cni-type              = "macvlan" 
     access-gateway-ip     = "10.202.0.1"
     access-interface      = "access"
     access-ip             = "10.202.0.10/24"
@@ -1285,6 +1308,7 @@ resource "juju_offer" "upf-fiveg-n4" {
   application_name = module.sdcore-user-plane.upf_app_name
   endpoint         = module.sdcore-user-plane.fiveg_n4_endpoint
 }
+
 EOF
 ```
 
@@ -1299,6 +1323,17 @@ Deploy SD-Core User Plane:
 ```console
 terraform apply -auto-approve
 ```
+
+Monitor the status of the deployment:
+
+```console
+watch -n 1 -c juju status --color --relations
+```
+
+The deployment is ready when the UPF application is in the `Active/Idle` state. It is normal
+for `grafana-agent` to remain in waiting state.
+
+Log out of the VM.
 
 ### Checkpoint 4: Does the UPF external LoadBalancer service exist?
 
@@ -1395,6 +1430,7 @@ resource "juju_offer" "gnbsim-fiveg-gnb-identity" {
   application_name = module.gnbsim.app_name
   endpoint         = module.gnbsim.fiveg_gnb_identity_endpoint
 }
+
 EOF
 ```
 
@@ -1409,6 +1445,17 @@ Deploy SD-Core User Plane:
 ```console
 terraform apply -auto-approve
 ```
+
+Monitor the status of the deployment:
+
+```console
+watch -n 1 -c juju status --color --relations
+```
+
+The deployment is ready when the `gnbsim` application is in the `Active/Idle` state. It is normal
+for `grafana-agent` to remain in waiting state.
+
+Log out of the VM.
 
 ## 7. Configure SD-Core
 
@@ -1447,14 +1494,34 @@ resource "juju_integration" "nms-upf" {
     offer_url = juju_offer.upf-fiveg-n4.url
   }
 }
+
 EOF
+```
+
+Get the IP address of the Traefik application (in this tutorial it's 10.201.0.53) and note it
+for the next step:
+
+```console
+juju switch control-plane
+```
+
+```console
+juju status traefik
+```
+
+The output should contain:
+
+```console
+(...)
+App      Version  Status  Scale  Charm        Channel        Rev  Address      Exposed  Message
+traefik  2.10.4   active      1  traefik-k8s  latest/stable  166  10.201.0.53  no
+(...)
 ```
 
 Configure Traefik to use an external hostname. To do that, edit `traefik_config`
 in the `main.tf` file:
 
 ```console
-:caption: main.tf
 (...)
 module "sdcore-control-plane" {
   (...)
@@ -1473,16 +1540,7 @@ Apply the changes:
 terraform apply -auto-approve
 ```
 
-```{note}
-Replace `10.201.0.53` with the Application IP address of the `traefik` application. 
-You can find it by running `juju status traefik` in the `control-plane` Juju model.
-```
-
 Retrieve the NMS address:
-
-```console
-juju switch control-plane
-```
 
 ```console
 juju run traefik/0 show-proxied-endpoints
@@ -1543,6 +1601,7 @@ module "cos-lite" {
     grafana_dashboards_path  = "grafana_dashboards/sdcore/"
   }
 }
+
 EOF
 ```
 
@@ -1561,6 +1620,7 @@ resource "juju_offer" "loki-logging" {
   application_name = module.cos-lite.loki_app_name
   endpoint         = "logging"
 }
+
 EOF
 ```
 
@@ -1646,6 +1706,7 @@ resource "juju_integration" "user-plane-loki" {
     offer_url = juju_offer.loki-logging.url
   }
 }
+
 EOF
 ```
 
@@ -1693,6 +1754,10 @@ we will revisit it shortly.
 ```{image} ../images/grafana_5g_dashboard_sim_before.png
 :alt: Initial Grafana dashboard showing UPF status
 :align: center
+```
+
+```{note}
+It may take up to 5 minutes for the relevant metrics to be available in Prometheus.
 ```
 
 ## 9. Run the 5G simulation
