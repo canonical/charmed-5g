@@ -166,7 +166,7 @@ EOF
 
 ```{note}
 You can get a ready example by cloning [this Git repository](https://github.com/canonical/charmed-5g).
-All necessary files are in the `examples/terraform` directory.
+All necessary files are in the `examples/terraform/getting_started` directory.
 ```
 
 ## 5. Deploy SD-Core
