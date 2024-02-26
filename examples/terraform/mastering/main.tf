@@ -21,6 +21,7 @@ module "sdcore-user-plane" {
   create_model = false
 
   upf_config = {
+    cni-type              = "macvlan"
     access-gateway-ip     = "10.202.0.1"
     access-interface      = "access"
     access-ip             = "10.202.0.10/24"

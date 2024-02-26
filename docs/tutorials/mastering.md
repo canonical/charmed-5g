@@ -1871,8 +1871,14 @@ You have learned how to:
 
 - view the logs for the various functions
 - manage the integrations between deployed functions
-- run a simulation testing data flow through the 5g core
-- view the metrics produced by the 5g core
+- run a simulation testing data flow through the 5G core
+- view the metrics produced by the 5G core
+
+```{note}
+For your convenience, a complete Terraform module covering the deployments and integrations 
+from this tutorial, is available in [this Git repository](https://github.com/canonical/charmed-5g).
+All necessary files are in the `examples/terraform/mastering` directory.
+```
 
 ## 11. Cleaning up
 
