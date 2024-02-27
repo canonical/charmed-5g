@@ -93,28 +93,7 @@ Install LXD:
 sudo snap install lxd
 ```
 
-Create custom storage pool, LXD project and profile:
-
-```console
-lxc storage create sdcore zfs size=150GiB
-```
-
-```console
-lxc project create sdcore --config features.images=true --config features.networks=true --config features.networks.zones=true --config features.profiles=true --config features.storage.buckets=true --config features.storage.volumes=true
-```
-
-```console
-lxc profile create sdcore 
-```
-
-```{note}
-When using LXD version lower than 5.9, the command above will produce the following error:
-> Error: Invalid project configuration key "features.networks.zones"
-
-Please upgrade your LXD to the latest version or remove unsupported config from the command.
-```
-
-Create the configuration to initialize the LXD:
+Create LXD configuration file:
 
 ```console
 cat << EOF | sudo tee ~/preseed.yaml
@@ -150,8 +129,17 @@ projects:
 EOF
 ```
 
+Initialize LXD:
+
 ```console
 lxd init --preseed < ~/preseed.yaml
+```
+
+```{note}
+When using LXD version lower than 5.9, the command above will produce the following error:
+> Error: Invalid project configuration key "features.networks.zones"
+
+Please upgrade your LXD to the latest version or remove unsupported config from the command.
 ```
 
 ### Install and configure Multipass
