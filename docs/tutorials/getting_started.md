@@ -101,7 +101,6 @@ Create a Terraform module containing the SD-Core 5G core network, 5G radio and a
 simulator and a router:
 
 ```console
-cd terraform
 cat << EOF > main.tf
 resource "juju_model" "sdcore" {
   name = "sdcore"
