@@ -794,7 +794,7 @@ multipass shell control-plane
 Install MicroK8s:
 
 ```console
-sudo snap install microk8s --channel=1.28-strict/stable
+sudo snap install microk8s --channel=1.29-strict/stable
 ```
 
 ```console
@@ -846,7 +846,7 @@ Install MicroK8s, configure MetalLB to expose 1 IP address for the UPF (`10.201.
 and enable the Multus plugin:
 
 ```console
-sudo snap install microk8s --channel=1.28-strict/stable
+sudo snap install microk8s --channel=1.29-strict/stable
 ```
 
 ```console
@@ -934,7 +934,7 @@ multipass shell gnbsim
 Install MicroK8s and add the Multus plugin:
 
 ```console
-sudo snap install microk8s --channel=1.28-strict/stable
+sudo snap install microk8s --channel=1.29-strict/stable
 ```
 
 ```console
@@ -1016,7 +1016,7 @@ one IP address for the controller (`10.201.0.50`) and one
 for the Canonical Observability Stack (`10.201.0.51)`:
 
 ```console
-sudo snap install microk8s --channel=1.28-strict/stable
+sudo snap install microk8s --channel=1.29-strict/stable
 ```
 
 ```console
