@@ -11,7 +11,7 @@ A machine running Ubuntu 22.04 with the following resources:
 
 - At least one NIC with internet access
 - 8 cores
-- 24 GB RAM
+- 32 GB RAM
 - 150 GiB disk
 
 ### Networks
@@ -74,9 +74,6 @@ Arrange the file permissions and apply the network configuration:
 
 ```console
 sudo chmod 600 /etc/netplan/99-sdcore-networks.yaml
-```
-
-```console
 sudo netplan apply
 ```
 
@@ -148,9 +145,6 @@ Install Multipass and set LXD as local driver:
 
 ```console
 sudo snap install multipass
-```
-
-```console
 multipass set local.driver=lxd
 ```
 
@@ -182,29 +176,11 @@ Create VMs with Multipass:
 
 ```console
 multipass launch -c 1 -m 1G -d 10G -n dns --network mgmt-br jammy
-```
-
-```console
 multipass launch -c 4 -m 8G -d 40G -n control-plane --network mgmt-br jammy
-```
-
-```console
 multipass launch -c 2 -m 4G -d 20G -n user-plane  --network mgmt-br --network core-br --network access-br jammy
-```
-
-```console
 multipass launch -c 4 -m 6G -d 40G -n juju-controller --network mgmt-br jammy
-```
-
-```console
 multipass launch -c 2 -m 3G -d 20G -n gnbsim --network mgmt-br --network ran-br jammy
-```
-
-```console
 multipass launch -c 1 -m 1G -d 10G -n ran-access-router --network mgmt-br --network ran-br --network access-br jammy
-```
-
-```console
 multipass launch -c 1 -m 1G -d 10G -n core-router --network mgmt-br --network core-br jammy
 ```
 
@@ -221,7 +197,7 @@ multipass list
 
 The output should be similar to the following:
 
-```
+```console
 Name                    State             IPv4             Image
 juju-controller         Running           10.231.204.5     Ubuntu 22.04 LTS
 core-router             Running           10.231.204.200   Ubuntu 22.04 LTS
@@ -261,9 +237,6 @@ Apply the network configuration:
 
 ```console
 sudo chmod 600 /etc/netplan/50-cloud-init.yaml
-```
-
-```console
 sudo netplan apply
 ```
 
@@ -271,21 +244,9 @@ Install the DNS server:
 
 ```console
 sudo apt update
-```
-
-```console
 sudo apt install dnsmasq -y
-```
-
-```console
 sudo systemctl disable systemd-resolved
-```
-
-```console
 sudo systemctl stop systemd-resolved
-```
-
-```console
 sudo systemctl restart dnsmasq
 ```
 
@@ -305,9 +266,6 @@ Update resolv.conf as we are no longer using systemd-resolved:
 
 ```console
 sudo rm /etc/resolv.conf
-```
-
-```console
 echo 127.0.0.1 | sudo tee /etc/resolv.conf
 ```
 
@@ -426,9 +384,6 @@ Apply the network configuration:
 
 ```console
 sudo chmod 600 /etc/netplan/50-cloud-init.yaml
-```
-
-```console
 sudo netplan apply
 ```
 
@@ -498,9 +453,6 @@ Apply the network configuration:
 
 ```console
 sudo chmod 600 /etc/netplan/50-cloud-init.yaml
-```
-
-```console
 sudo netplan apply
 ```
 
@@ -554,9 +506,6 @@ Apply the network configuration:
 
 ```console
 sudo chmod 600 /etc/netplan/50-cloud-init.yaml
-```
-
-```console
 sudo netplan apply
 ```
 
@@ -615,9 +564,6 @@ Apply the network configuration:
 
 ```console
 sudo chmod 600 /etc/netplan/50-cloud-init.yaml
-```
-
-```console
 sudo netplan apply
 ```
 
@@ -669,9 +615,6 @@ Apply the network configuration:
 
 ```console
 sudo chmod 600 /etc/netplan/50-cloud-init.yaml
-```
-
-```console
 sudo netplan apply
 ```
 
@@ -682,9 +625,6 @@ Set up IP forwarding:
 
 ```console
 echo net.ipv4.ip_forward=1 | sudo tee /etc/sysctl.conf
-```
-
-```console
 sudo sysctl -w net.ipv4.ip_forward=1
 ```
 
@@ -725,9 +665,6 @@ Apply the network configuration:
 
 ```console
 sudo chmod 600 /etc/netplan/50-cloud-init.yaml
-```
-
-```console
 sudo netplan apply
 ```
 
@@ -738,17 +675,8 @@ cat << EOF | sudo tee /etc/rc.local
 #!/bin/bash
 iptables -t nat -A POSTROUTING -o enp5s0 -j MASQUERADE -s 10.203.0.0/24
 EOF
-```
-
-```console
 sudo chmod +x /etc/rc.local
-```
-
-```console
 sudo /etc/rc.local
-```
-
-```console
 sudo sysctl -w net.ipv4.ip_forward=1 | sudo tee -a /etc/sysctl.conf
 ```
 
@@ -795,13 +723,7 @@ Install MicroK8s:
 
 ```console
 sudo snap install microk8s --channel=1.29-strict/stable
-```
-
-```console
 sudo microk8s enable hostpath-storage
-```
-
-```console
 sudo usermod -a -G snap_microk8s $USER
 ```
 
@@ -816,9 +738,6 @@ Now update MicroK8s DNS to point to our DNS server:
 
 ```console
 sudo microk8s disable dns
-```
-
-```console
 sudo microk8s enable dns:10.201.0.100
 ```
 
@@ -826,9 +745,6 @@ Export the Kubernetes configuration and copy it to the `juju-controller` VM:
 
 ```console
 sudo microk8s.config > control-plane-cluster.yaml
-```
-
-```console
 scp control-plane-cluster.yaml juju-controller.mgmt:
 ```
 
@@ -847,27 +763,12 @@ and enable the Multus plugin:
 
 ```console
 sudo snap install microk8s --channel=1.29-strict/stable
-```
-
-```console
 sudo microk8s enable hostpath-storage
-```
-
-```console
 sudo microk8s enable metallb:10.201.0.200/32
-```
-
-```console
 sudo microk8s addons repo add community \
     https://github.com/canonical/microk8s-community-addons \
     --reference feat/strict-fix-multus
-```
-
-```console
 sudo microk8s enable multus
-```
-
-```console
 sudo usermod -a -G snap_microk8s $USER
 ```
 
@@ -875,9 +776,6 @@ Update MicroK8s DNS to point to our DNS server:
 
 ```console
 sudo microk8s disable dns
-```
-
-```console
 sudo microk8s enable dns:10.201.0.100
 ```
 
@@ -885,9 +783,6 @@ Export the Kubernetes configuration and copy it to the `juju-controller` VM:
 
 ```console
 sudo microk8s.config > user-plane-cluster.yaml
-```
-
-```console
 scp user-plane-cluster.yaml juju-controller.mgmt:
 ```
 
@@ -911,13 +806,7 @@ sudo ip link set dev access up
 sudo ip link add core link enp7s0 type macvlan mode bridge
 sudo ip link set dev core up
 EOF
-```
-
-```console
 sudo chmod +x /etc/rc.local
-```
-
-```console
 sudo /etc/rc.local
 ```
 
@@ -935,23 +824,11 @@ Install MicroK8s and add the Multus plugin:
 
 ```console
 sudo snap install microk8s --channel=1.29-strict/stable
-```
-
-```console
 sudo microk8s enable hostpath-storage
-```
-
-```console
 sudo microk8s addons repo add community \
     https://github.com/canonical/microk8s-community-addons \
     --reference feat/strict-fix-multus
-```
-
-```console
 sudo microk8s enable multus
-```
-
-```console
 sudo usermod -a -G snap_microk8s $USER
 ```
 
@@ -959,9 +836,6 @@ Update MicroK8s DNS to point to our DNS server:
 
 ```console
 sudo microk8s disable dns
-```
-
-```console
 sudo microk8s enable dns:10.201.0.100
 ```
 
@@ -969,9 +843,6 @@ Export the Kubernetes configuration and copy it to the `juju-controller` VM:
 
 ```console
 sudo microk8s.config > gnb-cluster.yaml
-```
-
-```console
 scp gnb-cluster.yaml juju-controller.mgmt:
 ```
 
@@ -991,13 +862,7 @@ cat << EOF | sudo tee /etc/rc.local
 sudo ip link add ran link enp7s0 type macvlan mode bridge
 sudo ip link set dev ran up
 EOF
-```
-
-```console
 sudo chmod +x /etc/rc.local
-```
-
-```console
 sudo /etc/rc.local
 ```
 
@@ -1017,21 +882,9 @@ for the Canonical Observability Stack (`10.201.0.51)`:
 
 ```console
 sudo snap install microk8s --channel=1.29-strict/stable
-```
-
-```console
 sudo microk8s enable hostpath-storage
-```
-
-```console
 sudo microk8s enable metallb:10.201.0.50-10.201.0.51
-```
-
-```console
 sudo usermod -a -G snap_microk8s $USER
-```
-
-```console
 newgrp snap_microk8s
 ```
 
@@ -1039,9 +892,6 @@ Update MicroK8s DNS to point to our DNS server:
 
 ```console
 sudo microk8s disable dns
-```
-
-```console
 sudo microk8s enable dns:10.201.0.100
 ```
 
@@ -1050,13 +900,7 @@ This will expose the Juju controller on the first allocated MetalLB address:
 
 ```console
 mkdir -p ~/.local/share/juju
-```
-
-```console
 sudo snap install juju --channel=3.1/stable
-```
-
-```console
 juju bootstrap microk8s --config controller-service-type=loadbalancer sdcore
 ```
 
@@ -1066,25 +910,10 @@ by using the Kubernetes configuration file generated when setting up the cluster
 
 ```console
 export KUBECONFIG=control-plane-cluster.yaml
-```
-
-```console
 juju add-k8s control-plane-cluster --controller sdcore
-```
-
-```console
 export KUBECONFIG=user-plane-cluster.yaml
-```
-
-```console
 juju add-k8s user-plane-cluster --controller sdcore
-```
-
-```console
 export KUBECONFIG=gnb-cluster.yaml
-```
-
-```console
 juju add-k8s gnb-cluster --controller sdcore
 ```
 
@@ -1135,9 +964,6 @@ Inside newly created `terraform` folder create a `terraform.tf` file:
 
 ```console
 cd terraform
-```
-
-```console
 cat << EOF > terraform.tf
 terraform {
   required_providers {
@@ -1491,9 +1317,6 @@ for the next step:
 
 ```console
 juju switch control-plane
-```
-
-```console
 juju status traefik
 ```
 
@@ -1628,9 +1451,6 @@ Monitor the status of the deployment:
 
 ```console
 juju switch cos-lite
-```
-
-```console
 watch -n 1 -c juju status --color --relations
 ```
 
@@ -1710,9 +1530,6 @@ From the `juju-controller` VM, retrieve the Grafana URL and admin password:
 
 ```console
 juju switch cos-lite
-```
-
-```console
 juju run grafana/leader get-admin-password
 ```
 
@@ -1819,7 +1636,7 @@ juju debug-log | grep imsi-208930100007487
 You may view the control plane logs by logging into the control plane cluster and using Kubernetes 
 commands as follows:
 
-```bash
+```console
 microk8s.kubectl logs -n control-plane -c amf amf-0 --tail 70
 microk8s.kubectl logs -n control-plane -c ausf ausf-0 --tail 70
 microk8s.kubectl logs -n control-plane -c nrf nrf-0 --tail 70
