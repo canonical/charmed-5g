@@ -8,15 +8,58 @@ You will need a Kubernetes cluster installed and configured with Multus.
 
 - Juju >= 3.4
 - Kubernetes >= 1.25
-- A `LoadBalancer` Service for Kubernetes
+- A `LoadBalancer` Service for Kubernetes with at least 3 addresses available
 - Multus
+- Terraform
+- Git
 
 ## Deploy
 
-```bash
-juju deploy sdcore-k8s --trust --channel=beta
+Get Charmed 5G Terraform modules by cloning the [Charmed 5G Terraform modules][Charmed 5G Terraform modules] Git repository.
+Inside the `modules/sdcore-k8s` directory, create a `terraform.tfvars` file to set the name of Juju model for the deployment:
+
+```console
+git clone https://github.com/canonical/terraform-juju-sdcore-k8s.git
+cd terraform-juju-sdcore-k8s/modules/sdcore-k8s
+cat << EOF > terraform.tfvars
+model_name = "<YOUR_JUJU_MODEL_NAME>"
+EOF
 ```
+
+Initialize Juju Terraform provider:
+
+```console
+terraform init
+```
+
+Deploy 5G network.
+
+```console
+terraform apply -var-file="terraform.tfvars" -auto-approve
+```
+
+The deployment process should take approximately 15-20 minutes.
+
+You can monitor the status of the deployment:
+
+```console
+juju switch <YOUR_JUJU_MODEL_NAME>
+watch -n 1 -c juju status --color --relations
+```
+
+The deployment is ready when all the charms are in the `Active/Idle` state. 
+It is normal for `grafana-agent` to remain in waiting state.
 
 ## Configure
 
-To view all configuration options, please visit the bundle's [Charmhub page](https://charmhub.io/sdcore-k8s/).
+Configuration of the Charmed 5G deployment should be done **only** through the `.tfvars` file. 
+
+To view all the available configuration options, please inspect the `variables.tf` file available inside the Terraform module directory.
+
+To be effective, every configuration change needs to be applied using the following command:
+
+```console
+terraform apply -var-file="terraform.tfvars" -auto-approve
+```
+
+[Charmed 5G Terraform modules]: https://github.com/canonical/terraform-juju-sdcore-k8s

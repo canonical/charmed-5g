@@ -1,79 +1,94 @@
 # Integrate SD-Core with Canonical Observability Stack
 
-## Requirements
+[Charmed 5G Terraform modules][Charmed 5G Terraform modules] come with built-in support for the Canonical Observability Stack (COS).
+By default, COS deployment and integration is disabled.
+This guide covers two ways of integrating SD-Core with COS:
+1. [Integrating SD-Core with COS at the deployment stage](##integrating-sd-core-with-cos-at-the-deployment-stage)
+2. [Integrating COS with an existing SD-Core deployment](##integrating-cos-with-an-existing-sd-core-deployment)
 
-- One of the `sdcore-k8s` bundles deployed in a Juju model
+## Integrating SD-Core with COS at the deployment stage
 
-## Deploy the `cos-lite` bundle
+This option allows deploying COS and integrating it with SD-Core as a Day 1 operation. 
 
-Deploy the `cos-lite` charm bundle in a Juju model named `cos`:
+### Pre-requisites
 
-```bash
-juju add-model cos 
-juju deploy cos-lite --trust
-```
+- A Kubernetes cluster capable of handling the load from both SD-Core and COS
+- [Charmed 5G Terraform modules][Charmed 5G Terraform modules] Git repository cloned onto the Juju host machine
 
-## Deploy the `cos-configuration-k8s` charm
+### Including COS integration in the SD-Core deployment
 
-Deploy the `cos-configuration-k8s` charm with the following SD-Core COS configuration:
-
-```console
-juju deploy cos-configuration-k8s \
-  --config git_repo=https://github.com/canonical/sdcore-cos-configuration \
-  --config git_branch=main \
-  --config git_depth=1 \
-  --config grafana_dashboards_path=grafana_dashboards/sdcore/
-```
-
-Integrate it with Grafana:
+Inside the directory of a desired SD-Core Terraform module, create `variables.tfvars` file and add following line(s) to it:
 
 ```console
-juju integrate cos-configuration-k8s grafana
+deploy_cos = true
+cos_model_name = "YOUR_CUSTOM_COS_MODEL_NAME" (Optional. Defaults to `cos-lite`.)
+cos_configuration_config = {} (Optional. Allows customization of the `COS Configuration` application.)
 ```
 
-## Integrate Grafana Agent with Prometheus
-
-We will create a cross model integration between Grafana Agent (in the SD-Core model) and Prometheus (in the `cos` model).
-
-First, offer the following integrations from Prometheus and Loki for use in other models:
-
-```bash
-juju offer cos.prometheus:receive-remote-write
-juju offer cos.loki:logging
+```{note}
+If you have already created the `.tfvars` file, to customize the deployment of SD-Core, you should edit the existing file rather than create a new one.
 ```
 
-Then, consume the integrations from the SD-Core model:
+Proceed with the deployment.
 
-```bash
-juju switch <SD-Core model>
-juju consume cos.prometheus
-juju consume cos.loki
+## Integrating COS with an existing SD-Core deployment
+
+This option allows deploying COS and integrating it with SD-Core as a Day 2 operation.
+
+### Pre-requisites
+
+- A Kubernetes cluster capable of handling the load from both SD-Core and COS
+- Any [Charmed 5G Terraform module][Charmed 5G Terraform modules] deployed
+
+### Adding COS to an existing SD-Core deployment
+
+Go to a directory from which SD-Core was deployed (the one containing Terraform's `.tfstate` file).
+Edit the `.tfvars` nd add following line(s) to it:
+
+```console
+deploy_cos = true
+cos_model_name = "YOUR_CUSTOM_COS_MODEL_NAME" (Optional. Defaults to `cos-lite`.)
+cos_configuration_config = {} (Optional. Allows customization of the `COS Configuration` application.)
 ```
 
-Integrate `grafana-agent-k8s` with `prometheus` and `loki`:
+Apply the changes:
 
-```bash
-juju integrate prometheus:receive-remote-write grafana-agent-k8s:send-remote-write
-juju integrate loki:logging grafana-agent-k8s:logging-consumer
+```console
+terraform apply -var-file="<YOUR_TFVARS_FILE>" -auto-approve
 ```
+
+## Accessing the 5G Network Overview Grafana dashboard
 
 Retrieve the Grafana URL and admin password:
 
 ```console
-ubuntu@host:~ $ juju run grafana/leader get-admin-password
+juju switch cos-lite
+juju run grafana/leader get-admin-password
+```
+
+You should see the output similar to the following:
+
+```console
 Running operation 1 with 1 task
   - task 2 on unit-grafana-0
 
 Waiting for task 2...
-admin-password: ngdrjomIOMyt
-url: http://10.0.0.5/cos-grafana
-
+admin-password: c72uEq8FyGRo
+url: http://10.201.0.51/cos-lite-grafana
 ```
 
-You can now see metrics and logs coming from SD-Core in your Grafana dashboard. Login using 
-the "admin" username and the admin password obtained in the last command.
+```{note}
+Due to a bug in Traefik, the URL returned by the command shown above, shows invalid `http` protocol.
+To access Grafana, please use `https`.
+```
+
+In your browser, navigate to the URL from the output (`https://10.201.0.51/cos-grafana`).
+Login using the "admin" username and the admin password provided in the last command.
+Click on "Dashboards" -> "Browse" and select "5G Network Overview".
 
 ```{image} ../images/grafana_5g_dashboard_sim_after.png
 :alt: Grafana dashboard
 :align: center
 ```
+
+[Charmed 5G Terraform modules]: https://github.com/canonical/terraform-juju-sdcore-k8s
