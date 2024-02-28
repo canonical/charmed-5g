@@ -91,8 +91,8 @@ terraform apply -var-file="control-plane.tfvars" -auto-approve
 
 `````{tab-item} Option 2: Cross-model integration
 
-In this option, it is assumed that the `sdcore-control-plane-k8s` has been deployed as part (a submodule) of a bigger system.
-The `sdcore-control-plane-k8s` Terraform module exposes the AMF application name and the `fiveg-n2` endpoint throught the `output.tf` file.
+In this option, it is assumed that the `sdcore-control-plane-k8s` has been deployed as part (a sub-module) of a bigger system.
+The `sdcore-control-plane-k8s` Terraform module exposes the AMF application name and the `fiveg-n2` endpoint through the `output.tf` file.
 To create a cross-model `fiveg_n2` integration in the root module of your deployment, add the following section to the `main.tf` file:
 
 ```console
@@ -206,8 +206,8 @@ terraform apply -var-file="user-plane.tfvars" -auto-approve
 
 `````{tab-item} Option 2: Cross-model integration
 
-In this option, it is assumed that the `sdcore-user-plane-k8s` has been deployed as part (a submodule) of a bigger system.
-The `sdcore-user-plane-k8s` Terraform module exposes the UPF application name and the `fiveg_n4` endpoint throught the `output.tf` file.
+In this option, it is assumed that the `sdcore-user-plane-k8s` has been deployed as part (a sub-module) of a bigger system.
+The `sdcore-user-plane-k8s` Terraform module exposes the UPF application name and the `fiveg_n4` endpoint through the `output.tf` file.
 To create a cross-model `fiveg_n4` integration in the root module of your deployment, add the following section to the `main.tf` file:
 
 ```console
