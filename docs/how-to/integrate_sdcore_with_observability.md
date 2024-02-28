@@ -43,7 +43,7 @@ This option allows deploying COS and integrating it with SD-Core as a Day 2 oper
 ### Adding COS to an existing SD-Core deployment
 
 Go to a directory from which SD-Core was deployed (the one containing Terraform's `.tfstate` file).
-Edit the `.tfvars` nd add following line(s) to it:
+Edit the `.tfvars` and add following line(s) to it:
 
 ```console
 deploy_cos = true
