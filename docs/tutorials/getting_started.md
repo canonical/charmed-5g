@@ -1,12 +1,16 @@
 # Getting started
 
-In this tutorial, we will deploy and run the SD-Core 5G core network using Juju. We will also
-deploy a radio and cellphone simulator to simulate usage of this network.
+In this tutorial, we will deploy and run the SD-Core 5G core network using Juju and Terraform.
+As part of this tutorial, we will also deploy additional components (gNB Simulator - a 5G radio 
+and a cellphone simulator, SD-Core Router - a software router facilitating communication between
+the core and the Radio Access Network (RAN)) to simulate usage of this network. Both gNB Simulator 
+and SD-Core Router serve only demonstration purposes and shouldn't be part of production 
+deployments.
 
-To complete this tutorial, you will need a machine with the following
-requirements:
+To complete this tutorial, you will need a machine which meets the following requirements:
 
 - A recent `x86_64` CPU (Intel 4ᵗʰ generation or newer, or AMD Ryzen or newer)
+- At least 4 cores
 - 8GB of RAM
 - 50GB of free disk space
 
@@ -61,61 +65,165 @@ directory:
 `mkdir -p /home/ubuntu/.local/share`
 ```
 
-## 3. Deploy SD-Core
+## 3. Install Terraform
 
-
-Create a Juju model named `core`:
-
-```console
-juju add-model core
-```
-
-Deploy the `sdcore-router-k8s` operator:
+From your terminal, install Terraform.
 
 ```console
-juju deploy sdcore-router-k8s router --trust --channel=beta
+sudo snap install terraform --classic
 ```
 
-Deploy the `sdcore-k8s` charm bundle:
+## 4. Create Terraform module
+
+On the host machine create a new directory called `terraform`:
 
 ```console
-juju deploy sdcore-k8s --trust --channel=beta
+mkdir terraform
 ```
 
-Deploying the core network can take up to 15 minutes. You can validate the status of the
-deployment by running `juju status`. The core network is ready when all the charms are in the
-`Active/Idle` state. It is normal for `grafana-agent-k8s` to remain in waiting state. Example:
+Inside newly created `terraform` directory create a `terraform.tf` file:
+
+```console
+cd terraform
+cat << EOF > terraform.tf
+terraform {
+  required_providers {
+    juju = {
+      source  = "juju/juju"
+      version = "~> 0.10.1"
+    }
+  }
+}
+EOF
+```
+
+Create a Terraform module containing the SD-Core 5G core network, 5G radio and a cellphone
+simulator and a router:
+
+```console
+cat << EOF > main.tf
+resource "juju_model" "sdcore" {
+  name = "sdcore"
+}
+
+module "sdcore-router" {
+  source = "git::https://github.com/canonical/sdcore-router-k8s-operator//terraform"
+
+  model_name = juju_model.sdcore.name
+  depends_on = [juju_model.sdcore]
+}
+
+module "sdcore" {
+  source = "git::https://github.com/canonical/terraform-juju-sdcore-k8s//modules/sdcore-k8s"
+
+  model_name = juju_model.sdcore.name
+  create_model = false
+  
+  traefik_config = {
+    routing_mode = "subdomain"
+  }
+
+  depends_on = [module.sdcore-router]
+}
+
+module "gnbsim" {
+  source = "git::https://github.com/canonical/sdcore-gnbsim-k8s-operator//terraform"
+
+  model_name = juju_model.sdcore.name
+  depends_on = [module.sdcore-router]
+}
+
+resource "juju_integration" "gnbsim-amf" {
+  model = juju_model.sdcore.name
+
+  application {
+    name     = module.gnbsim.app_name
+    endpoint = module.gnbsim.fiveg_n2_endpoint
+  }
+
+  application {
+    name     = module.sdcore.amf_app_name
+    endpoint = module.sdcore.fiveg_n2_endpoint
+  }
+}
+
+resource "juju_integration" "gnbsim-nms" {
+  model = juju_model.sdcore.name
+
+  application {
+    name     = module.gnbsim.app_name
+    endpoint = module.gnbsim.fiveg_gnb_identity_endpoint
+  }
+
+  application {
+    name     = module.sdcore.nms_app_name
+    endpoint = module.sdcore.fiveg_gnb_identity_endpoint
+  }
+}
+EOF
+```
+
+```{note}
+You can get a ready example by cloning [this Git repository](https://github.com/canonical/charmed-5g).
+All necessary files are in the `examples/terraform/getting_started` directory.
+```
+
+## 5. Deploy SD-Core
+
+Initialize Juju Terraform provider:
+
+```console
+terraform init
+```
+
+Deploy 5G network.
+
+```console
+terraform apply -auto-approve
+```
+
+The deployment process should take approximately 15-20 minutes. 
+
+Monitor the status of the deployment:
+
+```console
+juju switch sdcore
+watch -n 1 -c juju status --color --relations
+```
+
+The deployment is ready when all the charms are in the `Active/Idle` state. It is normal 
+for `grafana-agent` to remain in waiting state. Example:
 
 ```console
 ubuntu@host:~$ juju status
-Model  Controller          Cloud/Region        Version  SLA          Timestamp
-core   microk8s-localhost  microk8s/localhost  3.1.6    unsupported  12:58:34-05:00
+Model    Controller          Cloud/Region        Version  SLA          Timestamp
+sdcore   microk8s-localhost  microk8s/localhost  3.1.7    unsupported  13:40:12+01:00
 
-App                       Version  Status   Scale  Charm                     Channel        Rev  Address         Exposed  Message
-amf                                active       1  sdcore-amf-k8s                edge            57  10.152.183.208  no
-ausf                               active       1  sdcore-ausf-k8s               edge            40  10.152.183.237  no
-gnbsim                             active       1  sdcore-gnbsim-k8s             edge            43  10.152.183.167  no
-grafana-agent-k8s         0.32.1   waiting      1  grafana-agent-k8s             latest/stable   44  10.152.183.245  no       installing agent
-mongodb-k8s                        active       1  mongodb-k8s                   6/beta          36  10.152.183.156  no       Primary
-nms                                active       1  sdcore-nms-k8s                edge            26  10.152.183.121  no
-nrf                                active       1  sdcore-nrf-k8s                edge            62  10.152.183.123  no
-nssf                               active       1  sdcore-nssf-k8s               edge            37  10.152.183.165  no
-pcf                                active       1  sdcore-pcf-k8s                edge            32  10.152.183.205  no
-router                             active       1  sdcore-router-k8s             edge            33  10.152.183.49   no
-self-signed-certificates           active       1  self-signed-certificates      beta            33  10.152.183.153  no
-smf                                active       1  sdcore-smf-k8s                edge            37  10.152.183.147  no
-traefik-k8s               2.10.4   active       1  traefik-k8s                   latest/stable  148  10.0.0.3        no
-udm                                active       1  sdcore-udm-k8s                edge            35  10.152.183.168  no
-udr                                active       1  sdcore-udr-k8s                edge            31  10.152.183.96   no
-upf                                active       1  sdcore-upf-k8s                edge            64  10.152.183.126  no
-webui                              active       1  sdcore-webui-k8s              edge            23  10.152.183.128  no
+App                       Version  Status   Scale  Charm                         Channel             Rev  Address          Exposed  Message
+amf                                active       1  sdcore-amf-k8s                1.3/edge            57   10.152.183.208   no
+ausf                               active       1  sdcore-ausf-k8s               1.3/edge            40   10.152.183.237   no
+gnbsim                             active       1  sdcore-gnbsim-k8s             1.3/edge            43   10.152.183.167   no
+grafana-agent             0.32.1   waiting      1  grafana-agent-k8s             latest/stable       44   10.152.183.245   no       installing agent
+mongodb                            active       1  mongodb-k8s                   6/beta              36   10.152.183.156   no       Primary
+nms                                active       1  sdcore-nms-k8s                1.3/edge            26   10.152.183.121   no
+nrf                                active       1  sdcore-nrf-k8s                1.3/edge            62   10.152.183.123   no
+nssf                               active       1  sdcore-nssf-k8s               1.3/edge            37   10.152.183.165   no
+pcf                                active       1  sdcore-pcf-k8s                1.3/edge            32   10.152.183.205   no
+router                             active       1  sdcore-router-k8s             1.3/edge            33   10.152.183.49    no
+self-signed-certificates           active       1  self-signed-certificates      1.3/edge            33   10.152.183.153   no
+smf                                active       1  sdcore-smf-k8s                1.3/edge            37   10.152.183.147   no
+traefik                   2.10.4   active       1  traefik-k8s                   latest/stable      148   10.0.0.4         no
+udm                                active       1  sdcore-udm-k8s                1.3/edge            35   10.152.183.168   no
+udr                                active       1  sdcore-udr-k8s                1.3/edge            31   10.152.183.96    no
+upf                                active       1  sdcore-upf-k8s                1.3/edge            64   10.152.183.126   no
+webui                              active       1  sdcore-webui-k8s              1.3/edge            23   10.152.183.128   no
 
 Unit                         Workload  Agent  Address      Ports  Message
 amf/0*                       active    idle   10.1.182.23
 ausf/0*                      active    idle   10.1.182.18
 gnbsim/0*                    active    idle   10.1.182.50
-grafana-agent-k8s/0*         blocked   idle   10.1.182.51         logging-consumer: off, grafana-cloud-config: off
-mongodb-k8s/0*               active    idle   10.1.182.35         Primary
+grafana-agent/0*             blocked   idle   10.1.182.51         logging-consumer: off, grafana-cloud-config: off
+mongodb/0*                   active    idle   10.1.182.35         Primary
 nms/0*                       active    idle   10.1.182.2
 nrf/0*                       active    idle   10.1.182.53
 nssf/0*                      active    idle   10.1.182.48
@@ -123,56 +231,65 @@ pcf/0*                       active    idle   10.1.182.46
 router/0*                    active    idle   10.1.182.57
 self-signed-certificates/0*  active    idle   10.1.182.56
 smf/0*                       active    idle   10.1.182.27
-traefik-k8s/0*               active    idle   10.1.182.40
+traefik/0*                   active    idle   10.1.182.40
 udm/0*                       active    idle   10.1.182.52
 udr/0*                       active    idle   10.1.182.39
 upf/0*                       active    idle   10.1.182.60
 webui/0*                     active    idle   10.1.182.33
 ```
 
-## 4. Deploy the 5G simulator
+## 6. Configure the ingress
 
-Deploy the `sdcore-gnbsim-k8s` operator
-
-```console
-juju deploy sdcore-gnbsim-k8s gnbsim --trust --channel=beta
-```
-
-Integrate it to the AMF and the NMS:
+Get the IP address of the Traefik application:
 
 ```console
-juju integrate gnbsim:fiveg-n2 amf:fiveg-n2
-juju integrate gnbsim:fiveg_gnb_identity nms:fiveg_gnb_identity
+juju status traefik
 ```
 
-## 5. Configure the ingress
+In this tutorial, the IP is `10.0.0.4`. Please note it, as we will need it in the next step.
 
-Configure Traefik to use an external hostname:
+Configure Traefik to use an external hostname. To do that, edit `traefik_config` 
+in the `main.tf` file:
+
+```
+:caption: main.tf
+(...)
+module "sdcore" {
+  (...)
+  traefik_config = {
+    routing_mode      = "subdomain"
+    external_hostname = "10.0.0.4.nip.io"
+  }
+  (...)
+}
+(...)
+```
+
+Apply new configuration:
 
 ```console
-juju config traefik-k8s external_hostname=10.0.0.3.nip.io
+terraform apply -auto-approve
 ```
-
-Here, replace `10.0.0.3` with the Application IP address of the `traefik-k8s` application. You can find it by running `juju status traefik-k8s`.
 
 Retrieve the NMS address:
 
 ```console
-juju run traefik-k8s/0 show-proxied-endpoints
+juju run traefik/0 show-proxied-endpoints
 ```
 
-The output should be `http://core-nms.10.0.0.3.nip.io/`. Navigate to this address in your browser.
+The output should be `http://sdcore-nms.10.0.0.4.nip.io/`. Navigate to this address in your 
+browser.
 
 
-## 6. Configure the 5G core network through the Network Management System
+## 7. Configure the 5G core network through the Network Management System
 
 In the Network Management System (NMS), create a network slice with the following attributes:
 
 - Name: `default`
 - MCC: `208`
 - MNC: `93`
-- UPF: `upf-external.core.svc.cluster.local:8805`
-- gNodeB: `core-gnbsim-gnbsim`
+- UPF: `upf-external.sdcore.svc.cluster.local:8805`
+- gNodeB: `sdcore-gnbsim-gnbsim`
 
 You should see the following network slice created:
 
@@ -196,16 +313,15 @@ You should see the following subscriber created:
 :align: center
 ```
 
-## 7. Run the 5G simulation
+## 8. Run the 5G simulation
 
-Run the simulation
+Run the simulation:
 
 ```console
 juju run gnbsim/leader start-simulation
 ```
 
-The simulation executed successfully if you see `success: "true"` as one of the
-output messages:
+The simulation executed successfully if you see `success: "true"` as one of the output messages:
 
 ```console
 ubuntu@host:~$ juju run gnbsim/leader start-simulation
@@ -217,9 +333,21 @@ info: run juju debug-log to get more information.
 success: "true"
 ```
 
-## 8. Destroy the environment
+## 9. Destroy the environment
 
-Destroy the Juju controller and all its models
+Destroy Terraform deployment:
+
+```console
+terraform destroy -auto-approve
+```
+
+```{note}
+Terraform does not remove anything from the working directory. If needed, please clean up
+the `terraform` directory manually by removing everything except for the `main.tf` 
+and `terraform.tf` files.
+```
+
+Destroy the Juju controller and all its models:
 
 ```console
 juju kill-controller microk8s-localhost
