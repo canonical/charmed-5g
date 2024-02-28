@@ -63,4 +63,3 @@ terraform apply -var-file="terraform.tfvars" -auto-approve
 ```
 
 [Charmed 5G Terraform modules]: https://github.com/canonical/terraform-juju-sdcore-k8s
-
