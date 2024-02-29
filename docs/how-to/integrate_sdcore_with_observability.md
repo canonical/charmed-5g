@@ -3,8 +3,8 @@
 [Charmed 5G Terraform modules][Charmed 5G Terraform modules] come with built-in support for the Canonical Observability Stack (COS).
 By default, COS deployment and integration is disabled.
 This guide covers two ways of integrating SD-Core with COS:
-1. [Integrating SD-Core with COS at the deployment stage](##integrating-sd-core-with-cos-at-the-deployment-stage)
-2. [Integrating COS with an existing SD-Core deployment](##integrating-cos-with-an-existing-sd-core-deployment)
+1. [Integrating SD-Core with COS at the deployment stage](#integrating-sd-core-with-cos-at-the-deployment-stage)
+2. [Integrating COS with an existing SD-Core deployment](#integrating-cos-with-an-existing-sd-core-deployment)
 
 ## Integrating SD-Core with COS at the deployment stage
 
