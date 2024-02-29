@@ -9,7 +9,7 @@ the `sdcore-user-plane` Juju bundle.
   - CPU that supports AVX2, RDRAND and PDPE1GB instructions (Intel Haswell, AMD Excavator or equivalent)
   - LoadBalancer with 1 available address for the UPF
   - Multus CNI enabled
-- Juju >= 3.1/stable
+- Juju >= 3.4/stable
 - A Juju controller bootstrapped onto the Kubernetes host
 - Juju model created, named `user-plane`
 
