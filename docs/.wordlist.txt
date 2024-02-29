@@ -45,6 +45,7 @@ hugepages
 HugePages
 init
 ip
+IPs
 icmp
 ICMP
 IMSI
@@ -110,6 +111,7 @@ TCP
 Terraform
 TLS
 Traefik
+Traefik's
 UDM
 UDP
 UDR
