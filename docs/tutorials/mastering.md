@@ -913,9 +913,9 @@ Due to the newgrp command you will need to log out twice as it started a new she
 The following steps build on the Juju controller which was bootstrapped and knows how to manage the SD-Core Control Plane Kubernetes cluster.
 
 First, we will create a new Terraform module which we will use to deploy SD-Core Control Plane.
-In this module we will also specify the Access and Mobility Management Function (AMF) host name and IP address for sharing with the radios. 
-This host name must be resolvable by the gNB and the IP address must be reachable and resolve to the AMF unit. 
-In the bootstrap step, we set the Control Plane MetalLB range to start at `10.201.0.52`, so that is what we use in the configuration.
+After the successful deployment, we will configure the Access and Mobility Management Function (AMF) IP address for sharing with the radios and the Traefik external hostname for exposing the SD-Core Network Management System (NMS).
+This host name must be resolvable by the gNB and the IP address must be reachable and resolve to the AMF unit.
+In the bootstrap step, we set the Control Plane MetalLB IP range, and that is what we use in the configuration.
 Lastly, the module will expose the Software as a Service offer for the AMF.
 
 Log into the `juju-controller` VM:
@@ -963,7 +963,6 @@ module "sdcore-control-plane" {
   create_model = false
 
   amf_config = {
-    external-amf-ip       = "10.201.0.52"
     external-amf-hostname = "amf.mgmt"
   }
   traefik_config = {
@@ -1000,6 +999,88 @@ watch -n 1 -c juju status --color --relations
 
 The deployment is ready when all the charms are in the `Active/Idle` state. 
 It is normal for `grafana-agent` to remain in waiting state.
+
+Once the deployment is ready, we will proceed to the configuration part.
+
+Log out of the VM.
+
+Get the IP addresses of the AMF and Traefik LoadBalancer services:
+
+Log in to the `control-plane` VM:
+
+```console
+multipass shell control-plane
+```
+
+Get LoadBalancer services:
+
+```console
+microk8s.kubectl get services -A | grep LoadBalancer
+```
+
+This will show output similar to the following:
+
+```console
+control-plane    amf-external  LoadBalancer  10.152.183.179  10.201.0.52   38412:30408/SCTP
+control-plane    traefik       LoadBalancer  10.152.183.28   10.201.0.53   80:32349/TCP,443:31925/TCP
+```
+
+Note both IPs - in this case `10.201.0.52` for the AMF and `10.201.0.53` for Traefik. 
+We will need them shortly. 
+
+Log out of the VM.
+
+Log into the `juju-controller` VM:
+
+```console
+multipass shell juju-controller
+```
+
+Configure AMF external IP, using the address obtained in the previous step. 
+To do that, edit `amf_config` in the `main.tf` file in the `terraform` directory:
+
+```console
+cd terraform
+```
+
+Updated `amf_config` should look like similar to the below:
+
+```
+(...)
+module "sdcore-control-plane" {
+  (...)
+  amf_config = {
+    external-amf-ip       = "10.201.0.52"
+    external-amf-hostname = "amf.mgmt"
+  }
+  (...)
+}
+(...)
+```
+
+Configure Traefik's external hostname, using the address obtained in the previous step.
+To do that, edit `traefik_config` in the `main.tf` file.
+
+Updated `traefik_config` should look like similar to the below:
+
+```console
+(...)
+module "sdcore-control-plane" {
+  (...)
+  traefik_config = {
+    routing_mode      = "subdomain"
+    external_hostname = "10.201.0.53.nip.io"
+  }
+  (...)
+}
+(...)
+```
+
+Apply the changes:
+
+```console
+terraform apply -auto-approve
+```
 
 Log out of the VM.
 
@@ -1246,13 +1327,19 @@ Log out of the VM.
 
 The following steps show how to configure the SD-Core 5G core network.
 
-First, we will create integrations between the Network Management System (NMS) and the UPF and the gNB Simulator.
-Next we will configure Traefik to expose the NMS. 
-Lastly, we will create the core network configuration: a network slice, a device group and a subscriber.
+We will start by creating integrations between the Network Management System (NMS) and the UPF and the gNB Simulator.
+Once the integrations are ready, we will create the core network configuration: a network slice, a device group and a subscriber.
+
+Log into the `juju-controller` VM:
+
+```console
+multipass shell juju-controller
+```
 
 Add required integrations to the `main.tf` file used in the previous steps:
 
 ```console
+cd terraform
 cat << EOF >> main.tf
 resource "juju_integration" "nms-gnbsim" {
   model = "control-plane"
@@ -1283,38 +1370,6 @@ resource "juju_integration" "nms-upf" {
 EOF
 ```
 
-Get the IP address of the Traefik application (in this tutorial it's 10.201.0.53) and note it for the next step:
-
-```console
-juju switch control-plane
-juju status traefik
-```
-
-The output should contain:
-
-```console
-(...)
-App      Version  Status  Scale  Charm        Channel        Rev  Address      Exposed  Message
-traefik  2.10.4   active      1  traefik-k8s  latest/stable  166  10.201.0.53  no
-(...)
-```
-
-Configure Traefik to use an external hostname. 
-To do that, edit `traefik_config` in the `main.tf` file:
-
-```console
-(...)
-module "sdcore-control-plane" {
-  (...)
-  traefik_config = {
-    routing_mode      = "subdomain"
-    external_hostname = "10.201.0.53.nip.io"
-  }
-  (...)
-}
-(...)
-```
-
 Apply the changes:
 
 ```console
@@ -1324,6 +1379,7 @@ terraform apply -auto-approve
 Retrieve the NMS address:
 
 ```console
+juju switch control-plane
 juju run traefik/0 show-proxied-endpoints
 ```
 
