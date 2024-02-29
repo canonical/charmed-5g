@@ -56,7 +56,7 @@ terraform apply -var-file="control-plane.tfvars" -auto-approve
 
 ### Integration with the AMF N2 interface
 
-The AMF charm allows establishing the N2-plane connectivity through the `fiveg_n2` charm interface. 
+The AMF charm allows establishing the N2-plane connectivity through the `fiveg_n2` charm interface.
 
 ``````{tab-set}
 
