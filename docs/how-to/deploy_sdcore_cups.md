@@ -213,7 +213,7 @@ To create a cross-model `fiveg_n4` integration in the root module of your deploy
 ```console
 resource "juju_offer" "upf-fiveg-n4" {
   model            = "user-plane"
-  application_name = module.<USER PLANE MODULE NAME>.amf_app_name
+  application_name = module.<USER PLANE MODULE NAME>.upf_app_name
   endpoint         = module.<USER PLANE MODULE NAME>.fiveg_n4_endpoint
 }
 
