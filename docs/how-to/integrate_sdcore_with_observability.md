@@ -49,7 +49,7 @@ Edit the `.tfvars` and add following line(s) to it:
 
 ```console
 deploy_cos = true
-cos_model_name = "YOUR_CUSTOM_COS_MODEL_NAME" (Optional. Defaults to `cos-lite`.)
+cos_model_name = "<YOUR_CUSTOM_COS_MODEL_NAME>" (Optional. Defaults to `cos-lite`.)
 cos_configuration_config = {} (Optional. Allows customization of the `COS Configuration` application.)
 ```
 
@@ -58,6 +58,15 @@ Apply the changes:
 ```console
 terraform apply -var-file="<YOUR_TFVARS_FILE>" -auto-approve
 ```
+
+Monitor the status of the deployment:
+
+```console
+juju switch <YOUR_CUSTOM_COS_MODEL_NAME>
+watch -n 1 -c juju status --color --relations
+```
+
+The deployment is ready when all the charms are in the `Active/Idle` state.
 
 ## Accessing the 5G Network Overview Grafana dashboard
 
@@ -80,7 +89,7 @@ url: http://10.201.0.51/cos-lite-grafana
 ```
 
 ```{note}
-Due to a bug in Traefik, the URL returned by the command shown above, shows invalid `http` protocol.
+Due to a bug in the Traefik charm, the URL returned by the command shown above, shows invalid `http` protocol.
 To access Grafana, please use `https`.
 ```
 
