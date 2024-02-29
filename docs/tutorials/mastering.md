@@ -15,8 +15,8 @@ A machine running Ubuntu 22.04 with the following resources:
 
 The following IP networks will be used to connect and isolate the network functions.
 
-| Name | Subnet | Gateway IP |
-| ---- | ------ | ---------- |
+| Name         | Subnet        | Gateway IP |
+| ------------ | ------------- | ---------- |
 | `management` | 10.201.0.0/24 | 10.201.0.1 |
 | `access`     | 10.202.0.0/24 | 10.202.0.1 |
 | `core`       | 10.203.0.0/24 | 10.203.0.1 |
@@ -161,7 +161,7 @@ sudo snap connect multipass:lxd lxd
 To complete this tutorial, you will need seven virtual machines with access to the networks as follows.
 
 | Machine                              | CPUs | RAM | Disk | Networks                       |
-|--------------------------------------|------|-----|------|--------------------------------|
+| ------------------------------------ | ---- | --- | ---- | ------------------------------ |
 | DNS Server                           | 1    | 1g  | 10g  | `management`                   |
 | Control Plane Kubernetes Cluster     | 4    | 8g  | 40g  | `management`                   |
 | User Plane Kubernetes Cluster        | 2    | 4g  | 20g  | `management`, `access`, `core` |
@@ -266,17 +266,17 @@ echo 127.0.0.1 | sudo tee /etc/resolv.conf
 
 The following IP addresses are used in this tutorial and must be present in the DNS Server that all hosts are using.
 
-| Name | IP Address   | Purpose |
-| ---- |--------------| ------- |
-| `juju-controller.mgmt` | 10.201.0.104 | Management address for Juju machine |
-| `control-plane.mgmt` | 10.201.0.101 | Management address for control plane cluster machine |
-| `user-plane.mgmt` | 10.201.0.102 | Management address for user plane cluster machine |
-| `gnbsim.mgmt` | 10.201.0.103 | Management address for the gNB Simulator cluster machine |
-| `api.juju-controller.mgmt` | 10.201.0.50  | Juju controller address |
-| `cos.mgmt` | 10.201.0.51  | Canonical Observability Stack address |
-| `amf.mgmt` | 10.201.0.52  | Externally reachable control plane endpoint for the AMF |
-| `control-plane-nms.control-plane.mgmt` | 10.201.0.53  | Externally reachable control plane endpoint for the NMS |
-| `upf.mgmt` | 10.201.0.200 | Externally reachable control plane endpoint for the UPF |
+| Name                                   | IP Address   | Purpose                                                  |
+| -------------------------------------- | ------------ | -------------------------------------------------------- |
+| `juju-controller.mgmt`                 | 10.201.0.104 | Management address for Juju machine                      |
+| `control-plane.mgmt`                   | 10.201.0.101 | Management address for control plane cluster machine     |
+| `user-plane.mgmt`                      | 10.201.0.102 | Management address for user plane cluster machine        |
+| `gnbsim.mgmt`                          | 10.201.0.103 | Management address for the gNB Simulator cluster machine |
+| `api.juju-controller.mgmt`             | 10.201.0.50  | Juju controller address                                  |
+| `cos.mgmt`                             | 10.201.0.51  | Canonical Observability Stack address                    |
+| `amf.mgmt`                             | 10.201.0.52  | Externally reachable control plane endpoint for the AMF  |
+| `control-plane-nms.control-plane.mgmt` | 10.201.0.53  | Externally reachable control plane endpoint for the NMS  |
+| `upf.mgmt`                             | 10.201.0.200 | Externally reachable control plane endpoint for the UPF  |
 
 Add records under /etc/hosts:
 
@@ -766,11 +766,11 @@ scp user-plane-cluster.yaml juju-controller.mgmt:
 
 In this guide, the following network interfaces are available on the SD-Core `user-plane` VM:
 
-| Interface Name    | Purpose                                                                                                                                                           |
-|-------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| enp6s0            | internal Kubernetes management interface. This maps to the `management` subnet.                                                                                   |
-| enp7s0            | core interface. This maps to the `core` subnet.                                                                                                                   |
-| enp8s0            | access interface. This maps to the `access` subnet. Note that internet egress is required here and routing tables are already set to route gNB generated traffic. |
+| Interface Name | Purpose                                                                                                                                                           |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| enp6s0         | internal Kubernetes management interface. This maps to the `management` subnet.                                                                                   |
+| enp7s0         | core interface. This maps to the `core` subnet.                                                                                                                   |
+| enp8s0         | access interface. This maps to the `access` subnet. Note that internet egress is required here and routing tables are already set to route gNB generated traffic. |
 
 Now we create the MACVLAN bridges for `enp7s0` and `enp8s0`. These instructions are put into a file that is executed on reboot so the interfaces will come back.
 
@@ -826,9 +826,9 @@ scp gnb-cluster.yaml juju-controller.mgmt:
 In this guide, the following network interfaces are available on the `gnbsim` VM:
 
 | Interface Name | Purpose                                                                         |
-|----------------|---------------------------------------------------------------------------------|
-| enp6s0           | internal Kubernetes management interface. This maps to the `management` subnet. |
-| enp7s0           | ran interface. This maps to the `ran` subnet.                                   |
+| -------------- | ------------------------------------------------------------------------------- |
+| enp6s0         | internal Kubernetes management interface. This maps to the `management` subnet. |
+| enp7s0         | ran interface. This maps to the `ran` subnet.                                   |
 
 Now we create the MACVLAN bridges for `enp7s0`, and label them accordingly:
 
@@ -874,7 +874,7 @@ Install Juju and bootstrap the controller to the local Microk8s install as a loa
 
 ```console
 mkdir -p ~/.local/share/juju
-sudo snap install juju --channel=3.1/stable
+sudo snap install juju --channel=3.4/stable
 juju bootstrap microk8s --config controller-service-type=loadbalancer sdcore
 ```
 

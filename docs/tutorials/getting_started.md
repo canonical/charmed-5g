@@ -49,7 +49,7 @@ sudo microk8s enable metallb:10.0.0.2-10.0.0.4
 From your terminal, install Juju.
 
 ```console
-sudo snap install juju --channel=3.1/stable
+sudo snap install juju --channel=3.4/stable
 ```
 
 Bootstrap a Juju controller
@@ -197,7 +197,7 @@ for `grafana-agent` to remain in waiting state. Example:
 ```console
 ubuntu@host:~$ juju status
 Model    Controller          Cloud/Region        Version  SLA          Timestamp
-sdcore   microk8s-localhost  microk8s/localhost  3.1.7    unsupported  13:40:12+01:00
+sdcore   microk8s-localhost  microk8s/localhost  3.4.0    unsupported  13:40:12+01:00
 
 App                       Version  Status   Scale  Charm                         Channel             Rev  Address          Exposed  Message
 amf                                active       1  sdcore-amf-k8s                1.3/edge            57   10.152.183.208   no
