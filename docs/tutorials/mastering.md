@@ -158,7 +158,7 @@ sudo snap connect multipass:lxd lxd
 To complete this tutorial, you will need seven virtual machines with access to the networks as follows:
 
 | Machine                              | CPUs | RAM | Disk | Networks                       |
-|--------------------------------------|------|-----|------|--------------------------------|
+| ------------------------------------ | ---- | --- | ---- | ------------------------------ |
 | DNS Server                           | 1    | 1g  | 10g  | `management`                   |
 | Control Plane Kubernetes Cluster     | 4    | 8g  | 40g  | `management`                   |
 | User Plane Kubernetes Cluster        | 2    | 4g  | 20g  | `management`, `access`, `core` |
@@ -768,11 +768,11 @@ scp user-plane-cluster.yaml juju-controller.mgmt:
 
 In this guide, the following network interfaces are available on the SD-Core `user-plane` VM:
 
-| Interface Name    | Purpose                                                                                                                                                           |
-|-------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| enp6s0            | internal Kubernetes management interface. This maps to the `management` subnet.                                                                                   |
-| enp7s0            | core interface. This maps to the `core` subnet.                                                                                                                   |
-| enp8s0            | access interface. This maps to the `access` subnet. Note that internet egress is required here and routing tables are already set to route gNB generated traffic. |
+| Interface Name | Purpose                                                                                                                                                           |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| enp6s0         | internal Kubernetes management interface. This maps to the `management` subnet.                                                                                   |
+| enp7s0         | core interface. This maps to the `core` subnet.                                                                                                                   |
+| enp8s0         | access interface. This maps to the `access` subnet. Note that internet egress is required here and routing tables are already set to route gNB generated traffic. |
 
 Now we create the MACVLAN bridges for `enp7s0` and `enp8s0`.
 These instructions are put into a file that is executed on reboot so the interfaces will come back:
@@ -879,7 +879,7 @@ This will expose the Juju controller on the first allocated MetalLB address:
 
 ```console
 mkdir -p ~/.local/share/juju
-sudo snap install juju --channel=3.1/stable
+sudo snap install juju --channel=3.4/stable
 juju bootstrap microk8s --config controller-service-type=loadbalancer sdcore
 ```
 
