@@ -114,7 +114,6 @@ projects:
 - config:
     features.images: "true"
     features.networks: "true"
-    features.networks.zones: "true" # Omit if the LXD version is lower than 5.9.
     features.profiles: "true"
     features.storage.buckets: "true"
     features.storage.volumes: "true"
@@ -127,13 +126,6 @@ Initialize LXD:
 
 ```console
 lxd init --preseed < ~/preseed.yaml
-```
-
-```{note}
-When using LXD version lower than 5.9, the command above will produce the following error:
-> Error: Invalid project configuration key "features.networks.zones"
-
-Please upgrade your LXD to the latest version or remove unsupported config from the command.
 ```
 
 ### Install and configure Multipass
@@ -158,7 +150,7 @@ sudo snap connect multipass:lxd lxd
 To complete this tutorial, you will need seven virtual machines with access to the networks as follows:
 
 | Machine                              | CPUs | RAM | Disk | Networks                       |
-| ------------------------------------ | ---- | --- | ---- | ------------------------------ |
+|--------------------------------------|------|-----|------|--------------------------------|
 | DNS Server                           | 1    | 1g  | 10g  | `management`                   |
 | Control Plane Kubernetes Cluster     | 4    | 8g  | 40g  | `management`                   |
 | User Plane Kubernetes Cluster        | 2    | 4g  | 20g  | `management`, `access`, `core` |
@@ -769,7 +761,7 @@ scp user-plane-cluster.yaml juju-controller.mgmt:
 In this guide, the following network interfaces are available on the SD-Core `user-plane` VM:
 
 | Interface Name | Purpose                                                                                                                                                           |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | enp6s0         | internal Kubernetes management interface. This maps to the `management` subnet.                                                                                   |
 | enp7s0         | core interface. This maps to the `core` subnet.                                                                                                                   |
 | enp8s0         | access interface. This maps to the `access` subnet. Note that internet egress is required here and routing tables are already set to route gNB generated traffic. |
