@@ -1705,8 +1705,19 @@ All necessary files are in the `examples/terraform/mastering` directory.
 
 ## 11. Cleaning up
 
-Juju makes it simple to cleanly remove all the deployed applications by simply removing the model itself.
-To completely remove all deployments, use the following:
+Destroy Terraform deployment:
+
+```console
+terraform destroy -auto-approve
+```
+
+```{note}
+Terraform does not remove anything from the working directory. If needed, please clean up
+the `terraform` directory manually by removing everything except for the `main.tf` 
+and `terraform.tf` files.
+```
+
+Destroy Juju controller:
 
 ```bash
 juju destroy-controller --destroy-all-models sdcore --destroy-storage
