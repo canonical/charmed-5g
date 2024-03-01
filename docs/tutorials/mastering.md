@@ -1149,7 +1149,7 @@ Enter the `terraform` folder created in the previous step:
 cd terraform
 ```
 
-Edit the `main.tf` file:
+Update the `main.tf` file:
 
 ```console
 cat << EOF >> main.tf
@@ -1260,7 +1260,7 @@ Enter the `terraform` folder created in the previous step:
 cd terraform
 ```
 
-Edit the `main.tf` file:
+Update the `main.tf` file:
 
 ```console
 cat << EOF >> main.tf
