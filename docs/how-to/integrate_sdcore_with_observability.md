@@ -89,8 +89,7 @@ url: http://10.201.0.51/cos-lite-grafana
 ```
 
 ```{note}
-Due to a bug in the Traefik charm, the URL returned by the command shown above, shows invalid `http` protocol.
-To access Grafana, please use `https`.
+Grafana can be accessed using both `http` (as returned by the command above) or `https`.
 ```
 
 In your browser, navigate to the URL from the output (`https://10.201.0.51/cos-grafana`).
