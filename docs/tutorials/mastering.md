@@ -1681,15 +1681,6 @@ If required, all the VMs can be permanently removed:
 multipass purge
 ```
 
-Remove the initially created projects and store pool from the LXD:
-
-```console
-lxc project delete sdcore
-lxc project delete multipass
-lxc profile delete sdcore
-lxc storage delete sdcore
-```
-
 Delete the local network bridges that are created for LXD.
 Remove the configuration file from the host machine and apply the network configuration:
 
