@@ -87,45 +87,10 @@ Install LXD:
 sudo snap install lxd
 ```
 
-Create LXD configuration file:
-
-```console
-cat << EOF | sudo tee ~/preseed.yaml
-config: {}
-networks: []
-storage_pools:
-- config:
-    size: 150GiB
-    source: /var/snap/lxd/common/lxd/disks/sdcore.img
-    zfs.pool_name: sdcore
-  description: ""
-  name: sdcore
-  driver: zfs
-profiles:
-- config: {}
-  description: ""
-  devices:
-    root:
-      path: /
-      pool: sdcore
-      type: disk
-  name: sdcore
-projects:
-- config:
-    features.images: "true"
-    features.networks: "true"
-    features.profiles: "true"
-    features.storage.buckets: "true"
-    features.storage.volumes: "true"
-  description: SD-Core project
-  name: sdcore
-EOF
-```
-
 Initialize LXD:
 
 ```console
-lxd init --preseed < ~/preseed.yaml
+lxd init --auto
 ```
 
 ### Install and configure Multipass
@@ -1076,34 +1041,6 @@ terraform apply -auto-approve
 
 Log out of the VM.
 
-### Checkpoint 3: Does the AMF external LoadBalancer service exist?
-
-You should be able to see the AMF external LoadBalancer service in Kubernetes. 
-
-Log in to the `control-plane` VM:
-
-```console
-multipass shell control-plane
-```
-
-Get LoadBalancer services:
-
-```console
-microk8s.kubectl get services -A | grep LoadBalancer
-```
-
-This will show output similar to the following, indicating:
-
-- The AMF is exposed on 10.201.0.52 SCTP port 38412
-- The NMS is exposed on 10.201.0.53 TCP ports 80 and 443
-
-These IP addresses came from MetalLB and were configured in the bootstrap step.
-
-```console
-control-plane    amf-external  LoadBalancer  10.152.183.179  10.201.0.52   38412:30408/SCTP
-control-plane    traefik-k8s   LoadBalancer  10.152.183.28   10.201.0.53   80:32349/TCP,443:31925/TCP
-```
-
 ## 5. Deploy SD-Core User Plane
 
 The following steps build on the Juju controller which was bootstrapped and knows how to manage the SD-Core User Plane Kubernetes cluster.
@@ -1196,7 +1133,7 @@ It is normal for `grafana-agent` to remain in waiting state.
 
 Log out of the VM.
 
-### Checkpoint 4: Does the UPF external LoadBalancer service exist?
+### Checkpoint 3: Does the UPF external LoadBalancer service exist?
 
 You should be able to see the UPF external LoadBalancer service in Kubernetes.
 
@@ -1328,10 +1265,15 @@ Log into the `juju-controller` VM:
 multipass shell juju-controller
 ```
 
-Add required integrations to the `main.tf` file used in the previous steps:
+Enter the `terraform` folder created in the previous step:
 
 ```console
 cd terraform
+```
+
+Add required integrations to the `main.tf` file used in the previous steps:
+
+```console
 cat << EOF >> main.tf
 resource "juju_integration" "nms-gnbsim" {
   model = "control-plane"
@@ -1540,7 +1482,7 @@ Apply the changes:
 terraform apply -auto-approve
 ```
 
-## Checkpoint 5: Is Grafana dashboard available?
+## Checkpoint 4: Is Grafana dashboard available?
 
 From the `juju-controller` VM, retrieve the Grafana URL and admin password:
 
@@ -1561,8 +1503,7 @@ url: http://10.201.0.51/cos-lite-grafana
 ```
 
 ```{note}
-Due to a bug in Traefik, the URL returned by the command shown above, shows invalid `http` protocol.
-To access Grafana, please use `https`.
+Grafana can be accessed using both `http` (as returned by the command above) or `https`.
 ```
 
 In your browser, navigate to the URL from the output (`https://10.201.0.51/cos-grafana`). 
@@ -1607,8 +1548,7 @@ info: run juju debug-log to get more information.
 success: "true"
 ```
 
-## Checkpoint 6: Check the simulation logs to see the communication between elements and the data 
-exchange
+## Checkpoint 5: Check the simulation logs to see the communication between elements and the data exchange
 
 ### gNB Simulation Logs
 
@@ -1659,7 +1599,7 @@ microk8s.kubectl logs -n control-plane -c udm udm-0 --tail 70
 microk8s.kubectl logs -n control-plane -c udr udr-0 --tail 70
 ```
 
-## Checkpoint 7: View the metrics
+## Checkpoint 6: View the metrics
 
 ### Grafana Metrics
 
