@@ -45,6 +45,8 @@ hugepages
 HugePages
 init
 ip
+IPs
+icmp
 ICMP
 IMSI
 integrations
@@ -113,11 +115,13 @@ Terraform
 Terraform's
 TLS
 Traefik
+Traefik's
 UDM
 UDP
 UDR
 UE
 unsecure
+upf
 UPF
 UPFs
 vCPUs

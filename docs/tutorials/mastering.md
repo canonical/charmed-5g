@@ -1,6 +1,8 @@
 # Mastering
 
-In this tutorial, we will deploy and run the SD-Core 5G core network following Control and User Plane Separation (CUPS) principles. The radio and cell phone simulator will also be deployed on an isolated cluster. [Multipass](https://multipass.run/) is used to create separate VMs connected with [LXD](https://ubuntu.com/lxd) networking.
+In this tutorial, we will deploy and run the SD-Core 5G core network following Control and User Plane Separation (CUPS) principles.
+The radio and cell phone simulator will also be deployed on an isolated cluster.
+[Multipass](https://multipass.run/) is used to create separate VMs connected with [LXD](https://ubuntu.com/lxd) networking.
 
 ## 1. Prepare the Host machine
 
@@ -8,15 +10,15 @@ A machine running Ubuntu 22.04 with the following resources:
 
 - At least one NIC with internet access
 - 8 cores
-- 24 GB RAM
+- 32 GB RAM
 - 150 GiB disk
 
 ### Networks
 
-The following IP networks will be used to connect and isolate the network functions.
+The following IP networks will be used to connect and isolate the network functions:
 
 | Name         | Subnet        | Gateway IP |
-| ------------ | ------------- | ---------- |
+|--------------|---------------|------------|
 | `management` | 10.201.0.0/24 | 10.201.0.1 |
 | `access`     | 10.202.0.0/24 | 10.202.0.1 |
 | `core`       | 10.203.0.0/24 | 10.203.0.1 |
@@ -61,12 +63,11 @@ network:
       routes:
         - to: 10.202.0.0/24
           via: 10.204.0.1
-
   version: 2
 EOF
 ```
 
-Arrange the file permissions and apply the network configuration.
+Arrange the file permissions and apply the network configuration:
 
 ```console
 sudo chmod 600 /etc/netplan/99-sdcore-networks.yaml
@@ -74,7 +75,8 @@ sudo netplan apply
 ```
 
 ```{note}
-Applying new netplan configuration may produce warnings related to file permissions being too open. You may safely disregard them.
+Applying new netplan configuration may produce warnings related to file permissions being too open. 
+You may safely disregard them.
 ```
 
 ### Install and Configure LXD
@@ -85,72 +87,27 @@ Install LXD:
 sudo snap install lxd
 ```
 
-Create custom storage pool and LXD project:
+Initialize LXD:
 
 ```console
-lxc storage create sdcore zfs size=150GiB
-lxc project create sdcore --config features.images=true --config features.networks=true --config features.networks.zones=true --config features.profiles=true --config features.storage.buckets=true --config features.storage.volumes=true
-```
-
-```{note}
-When using LXD version lower than 5.9, the command above will produce the following error:
-> Error: Invalid project configuration key "features.networks.zones"
-
-Please upgrade your LXD to the latest version or remove unsupported config from the command.
-```
-
-Create the configuration to initialize the LXD.
-
-```console
-cat << EOF | sudo tee ~/preseed.yaml
-config: {}
-networks: []
-storage_pools:
-- config:
-    size: 150GiB
-    source: /var/snap/lxd/common/lxd/disks/sdcore.img
-    zfs.pool_name: sdcore
-  description: ""
-  name: sdcore
-  driver: zfs
-profiles:
-- config: {}
-  description: Default LXD profile
-  devices:
-    root:
-      path: /
-      pool: sdcore
-      type: disk
-  name: default
-projects:
-- config:
-    features.images: "true"
-    features.networks: "true"
-    features.networks.zones: "true" # Omit if the LXD version is lower than 5.9.
-    features.profiles: "true"
-    features.storage.buckets: "true"
-    features.storage.volumes: "true"
-  description: SD-Core project
-  name: sdcore
-EOF
-```
-
-```console
-lxd init --preseed < ~/preseed.yaml
+lxd init --auto
 ```
 
 ### Install and configure Multipass
 
-Install Multipass and set LXD as local driver:
+Install Multipass:
 
 ```console
 sudo snap install multipass
+```
+
+Set LXD as local driver:
+
+```console
 multipass set local.driver=lxd
 ```
 
-Wait a few seconds if you get the output: `set failed: cannot connect to the multipass socket` and retry to set local driver again.
-
-Connect Multipass to LXD.
+Connect Multipass to LXD:
 
 ```console
 sudo snap connect multipass:lxd lxd
@@ -158,10 +115,10 @@ sudo snap connect multipass:lxd lxd
 
 ## 2. Create Virtual Machines
 
-To complete this tutorial, you will need seven virtual machines with access to the networks as follows.
+To complete this tutorial, you will need seven virtual machines with access to the networks as follows:
 
 | Machine                              | CPUs | RAM | Disk | Networks                       |
-| ------------------------------------ | ---- | --- | ---- | ------------------------------ |
+|--------------------------------------|------|-----|------|--------------------------------|
 | DNS Server                           | 1    | 1g  | 10g  | `management`                   |
 | Control Plane Kubernetes Cluster     | 4    | 8g  | 40g  | `management`                   |
 | User Plane Kubernetes Cluster        | 2    | 4g  | 20g  | `management`, `access`, `core` |
@@ -182,7 +139,7 @@ multipass launch -c 1 -m 1G -d 10G -n ran-access-router --network mgmt-br --netw
 multipass launch -c 1 -m 1G -d 10G -n core-router --network mgmt-br --network core-br jammy
 ```
 
-Wait until all VMs are in a `Running` state.
+Wait until all the VMs are in a `Running` state.
 
 ### Checkpoint 1: Are the VM's ready ?
 
@@ -192,7 +149,7 @@ You should be able to see all the VMs in a `Running` state with their default IP
 multipass list
 ```
 
-The output should be similar to the following
+The output should be similar to the following:
 
 ```
 Name                    State             IPv4             Image
@@ -207,13 +164,13 @@ user-plane              Running           10.231.204.121   Ubuntu 22.04 LTS
 
 ### Install the DNS Server
 
-Log in to the `dns` VM.
+Log in to the `dns` VM:
 
 ```console
 multipass shell dns
 ```
 
-First, replace the content of `/etc/netplan/50-cloud-init.yaml` as following to configure `mgmt` interface IP address as `10.201.0.100`.
+First, replace the content of `/etc/netplan/50-cloud-init.yaml` to configure `mgmt` interface IP address as `10.201.0.100`:
 
 ```console
 cat << EOF | sudo tee /etc/netplan/50-cloud-init.yaml
@@ -229,7 +186,7 @@ network:
 EOF
 ```
 
-Apply the network configuration.
+Apply the network configuration:
 
 ```console
 sudo chmod 600 /etc/netplan/50-cloud-init.yaml
@@ -259,15 +216,16 @@ EOF
 ```
 
 Update resolv.conf as we are no longer using systemd-resolved:
+
 ```console
 sudo rm /etc/resolv.conf
 echo 127.0.0.1 | sudo tee /etc/resolv.conf
 ```
 
-The following IP addresses are used in this tutorial and must be present in the DNS Server that all hosts are using.
+The following IP addresses are used in this tutorial and must be present in the DNS Server that all hosts are using:
 
 | Name                                   | IP Address   | Purpose                                                  |
-| -------------------------------------- | ------------ | -------------------------------------------------------- |
+|----------------------------------------|--------------|----------------------------------------------------------|
 | `juju-controller.mgmt`                 | 10.201.0.104 | Management address for Juju machine                      |
 | `control-plane.mgmt`                   | 10.201.0.101 | Management address for control plane cluster machine     |
 | `user-plane.mgmt`                      | 10.201.0.102 | Management address for user plane cluster machine        |
@@ -302,10 +260,15 @@ sudo systemctl restart dnsmasq
 
 ### Checkpoint 2: Is the DNS server running properly?
 
-You should expect to see that `dnsmasq` service is up and running.
+Check the status of the `dnsmasq` service:
 
 ```console
-$ sudo systemctl status dnsmasq
+sudo systemctl status dnsmasq
+```
+
+The expected result should be similar to the below:
+
+```
 dnsmasq.service - dnsmasq - A lightweight DHCP and caching DNS server
      Loaded: loaded (/lib/systemd/system/dnsmasq.service; enabled; vendor preset: enabled)
      Active: active (running) since Thu 2024-01-11 13:46:34 +03; 6ms ago
@@ -314,13 +277,13 @@ dnsmasq.service - dnsmasq - A lightweight DHCP and caching DNS server
     Process: 2628 ExecStartPost=/etc/init.d/dnsmasq systemd-start-resolvconf (code=exited, status=0/SUCCESS)
 ```
 
-Test the DNS resolution and expect that the Nameserver is able to resolve the registered host names.
+Test the DNS resolution:
 
 ```console
 host upf.mgmt
 ```
 
-You should see `user-plane.mgmt has address 10.201.0.102`
+You should see `upf.mgmt has address 10.201.0.200`.
 
 Log out of the VM.
 
@@ -328,13 +291,13 @@ Log out of the VM.
 
 #### User-plane VM
 
-Log in to the `user-plane` VM.
+Log in to the `user-plane` VM:
 
 ```console
 multipass shell user-plane
 ```
 
-Configure IP address for `mgmt`, `core` and `access` interfaces, add nameservers for the `mgmt` interface and add route from `access` to `ran` network by replacing the content of `/etc/netplan/50-cloud-init.yaml` as following:
+Configure IP address for `mgmt`, `core` and `access` interfaces, add nameservers  for the `mgmt` interface and add route from `access` to `ran` network by replacing the content of `/etc/netplan/50-cloud-init.yaml`:
 
 ```console
 cat << EOF | sudo tee /etc/netplan/50-cloud-init.yaml
@@ -367,34 +330,38 @@ network:
 EOF
 ```
 
-Apply the network configuration.
+Apply the network configuration:
 
 ```console
 sudo chmod 600 /etc/netplan/50-cloud-init.yaml
 sudo netplan apply
 ```
 
-Check the current DNS server.
+Check the current DNS server:
 
 ```console
-$ resolvectl
-Link 3 (enp6s0)
-    Current Scopes: DNS
-         Protocols: +DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
-Current DNS Server: 10.201.0.100
-       DNS Servers: 10.201.0.100
-        DNS Domain: mgmt
+resolvectl
 ```
 
-Check the route from `access` interface to the `ran` network.
+You should see the new DNS server on `Link 3`:
+
+```
+Link 3 (enp6s0)
+Current Scopes: DNS
+     Protocols: +DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+   DNS Servers: 10.201.0.100
+    DNS Domain: mgmt
+```
+
+Check the route from `access` interface to the `ran` network:
 
 ```console
 ip route
 ```
 
-You should see the following routes in addition to the regular host routes.
+You should see the following routes in addition to the regular host routes:
 
-```console
+```
 10.201.0.0/24 dev enp6s0 proto kernel scope link src 10.201.0.102
 10.202.0.0/24 dev enp8s0 proto kernel scope link src 10.202.0.100
 10.203.0.0/24 dev enp7s0 proto kernel scope link src 10.203.0.100
@@ -405,13 +372,13 @@ Log out of the VM.
 
 #### Control-plane VM
 
-Log in to the `control-plane` VM.
+Log in to the `control-plane` VM:
 
 ```console
 multipass shell control-plane
 ```
 
-Configure IP address and nameservers for `mgmt` interface by replacing the content of `/etc/netplan/50-cloud-init.yaml` as following:
+Configure IP address and nameservers for `mgmt` interface by replacing the content of `/etc/netplan/50-cloud-init.yaml`:
 
 ```console
 cat << EOF | sudo tee /etc/netplan/50-cloud-init.yaml
@@ -431,14 +398,14 @@ network:
 EOF
 ```
 
-Apply the network configuration.
+Apply the network configuration:
 
 ```console
 sudo chmod 600 /etc/netplan/50-cloud-init.yaml
 sudo netplan apply
 ```
 
-Check the current DNS server.
+Check the current DNS server:
 
 ```console
 resolvectl
@@ -448,13 +415,13 @@ Log out of the VM.
 
 #### Gnbsim VM
 
-Log in to the `gnbsim` VM.
+Log in to the `gnbsim` VM:
 
 ```console
 multipass shell gnbsim
 ```
 
-Configure IP address for `mgmt` and `ran` interfaces add nameservers for the `mgmt` interface and add route from `ran` to `access` network by replacing the content of `/etc/netplan/50-cloud-init.yaml` as following:
+Configure IP address for `mgmt` and `ran` interfaces add nameservers for the `mgmt` interface and add route from `ran` to `access` network by replacing the content of `/etc/netplan/50-cloud-init.yaml`:
 
 ```console
 cat << EOF | sudo tee /etc/netplan/50-cloud-init.yaml
@@ -482,50 +449,44 @@ network:
 EOF
 ```
 
-Apply the network configuration.
+Apply the network configuration:
 
 ```console
 sudo chmod 600 /etc/netplan/50-cloud-init.yaml
 sudo netplan apply
 ```
 
-Check the current DNS server.
+Check the current DNS server:
 
 ```console
 resolvectl
 ```
 
-Check the route from `ran` interface to the `access` network.
+Check the route from `ran` interface to the `access` network:
 
 ```console
 ip route
 ```
 
-You should see the following routes in addition to the regular host routes.
+You should see the following routes in addition to the regular host routes:
 
-```console
+```
 10.201.0.0/24 dev enp6s0 proto kernel scope link src 10.201.0.103
 10.202.0.0/24 via 10.204.0.1 dev enp7s0 proto static
 10.204.0.0/24 dev enp7s0 proto kernel scope link src 10.204.0.100
-```
-
-```console
-$ ip route
-...
-10.202.0.0/24 via 10.204.0.1 dev enp7s0 proto static
 ```
 
 Log out of the VM.
 
 #### Juju-controller VM
 
-Log in to the `juju-controller` VM.
+Log in to the `juju-controller` VM:
 
 ```console
 multipass shell juju-controller
 ```
 
-Configure IP address and nameservers for `mgmt` interface by replacing the content of `/etc/netplan/50-cloud-init.yaml` as following:
+Configure IP address and nameservers for `mgmt` interface by replacing the content of `/etc/netplan/50-cloud-init.yaml`:
 
 ```console
 cat << EOF | sudo tee /etc/netplan/50-cloud-init.yaml
@@ -545,14 +506,14 @@ network:
 EOF
 ```
 
-Apply the network configuration.
+Apply the network configuration:
 
 ```console
 sudo chmod 600 /etc/netplan/50-cloud-init.yaml
 sudo netplan apply
 ```
 
-Check the current DNS server.
+Check the current DNS server:
 
 ```console
 resolvectl
@@ -562,13 +523,13 @@ Log out of the VM.
 
 #### RAN-access-router VM
 
-Log in to the `ran-access-router` VM.
+Log in to the `ran-access-router` VM:
 
 ```console
 multipass shell ran-access-router
 ```
 
-Configure IP address for `mgmt`, `ran` and `access` interfaces by replacing the content of `/etc/netplan/50-cloud-init.yaml` as following:
+Configure IP address for `mgmt`, `ran` and `access` interfaces by replacing the content of `/etc/netplan/50-cloud-init.yaml`:
 
 ```console
 cat << EOF | sudo tee /etc/netplan/50-cloud-init.yaml
@@ -595,7 +556,7 @@ network:
 EOF
 ```
 
-Apply the network configuration.
+Apply the network configuration:
 
 ```console
 sudo chmod 600 /etc/netplan/50-cloud-init.yaml
@@ -604,7 +565,7 @@ sudo netplan apply
 
 The `access-gateway-ip` is expected to forward the packets from the `access-interface` to the `gnb-subnet`.
 
-Set up IP forwarding
+Set up IP forwarding:
 
 ```console
 echo net.ipv4.ip_forward=1 | sudo tee /etc/sysctl.conf
@@ -615,13 +576,13 @@ Log out of the VM.
 
 #### Core-router VM
 
-Log in to the `core-router` VM.
+Log in to the `core-router` VM:
 
 ```console
 multipass shell core-router
 ```
 
-Configure IP address for `mgmt` and `core` interfaces by replacing the content of `/etc/netplan/50-cloud-init.yaml` as following:
+Configure IP address for `mgmt` and `core` interfaces by replacing the content of `/etc/netplan/50-cloud-init.yaml`:
 
 ```console
 cat << EOF | sudo tee /etc/netplan/50-cloud-init.yaml
@@ -643,7 +604,7 @@ network:
 EOF
 ```
 
-Apply the network configuration.
+Apply the network configuration:
 
 ```console
 sudo chmod 600 /etc/netplan/50-cloud-init.yaml
@@ -657,7 +618,6 @@ cat << EOF | sudo tee /etc/rc.local
 #!/bin/bash
 iptables -t nat -A POSTROUTING -o enp5s0 -j MASQUERADE -s 10.203.0.0/24
 EOF
-
 sudo chmod +x /etc/rc.local
 sudo /etc/rc.local
 sudo sysctl -w net.ipv4.ip_forward=1 | sudo tee -a /etc/sysctl.conf
@@ -667,7 +627,7 @@ Log out of the VM.
 
 ## 3. Configure VMs for SD-Core Deployment
 
-This section covers setting up the SSH keys and installation of Juju and MicroK8s on VMs which are going to build up the infrastructure for SD-Core.
+This section covers setting up the SSH keys and installation of necessary tools on the VMs which are going to build up the infrastructure for SD-Core.
 
 As we are going to be copying files around using ssh, we now will set up a new ssh key on the host running the tutorial:
 
@@ -690,47 +650,48 @@ done
 You may now delete the `tutorial_rsa` and `tutorial_rsa.pub` files from the host.
 ```
 
-Log out of the VM.
-
 ### Prepare SD-Core Control Plane VM
 
-Login to the `control-plane` VM.
+Login to the `control-plane` VM:
 
 ```console
 multipass shell control-plane
 ```
 
-Install Microk8s.
+Install MicroK8s:
 
 ```console
-sudo snap install microk8s --channel=1.27-strict/stable
+sudo snap install microk8s --channel=1.29-strict/stable
 sudo microk8s enable hostpath-storage
 sudo usermod -a -G snap_microk8s $USER
 ```
 
-The control plane needs to expose two services: the AMF and the NMS. In this step, we enable the MetalLB add on in Microk8s, and give it a range of two IP addresses:
+The control plane needs to expose two services: the AMF and the NMS.
+In this step, we enable the MetalLB add on in MicroK8s, and give it a range of two IP addresses:
 
 ```console
 sudo microk8s enable metallb:10.201.0.52-10.201.0.53
 ```
 
-Now update MicroK8s DNS to point to our DNS server
+Now update MicroK8s DNS to point to our DNS server:
 
 ```console
 sudo microk8s disable dns
 sudo microk8s enable dns:10.201.0.100
 ```
 
-Export the Kubernetes configuration and copy that to the `juju-controller` VM:
+Export the Kubernetes configuration and copy it to the `juju-controller` VM:
 
 ```console
 sudo microk8s.config > control-plane-cluster.yaml
 scp control-plane-cluster.yaml juju-controller.mgmt:
 ```
 
+Log out of the VM.
+
 ### Prepare SD-Core User Plane VM
 
-Log in to the `user-plane` VM.
+Log in to the `user-plane` VM:
 
 ```console
 multipass shell user-plane
@@ -739,9 +700,9 @@ multipass shell user-plane
 Install MicroK8s, configure MetalLB to expose 1 IP address for the UPF (`10.201.0.200`) and enable the Multus plugin:
 
 ```console
-sudo snap install microk8s --channel=1.27-strict/stable
+sudo snap install microk8s --channel=1.29-strict/stable
 sudo microk8s enable hostpath-storage
-sudo microk8s enable metallb:10.201.0.200-10.201.0.200
+sudo microk8s enable metallb:10.201.0.200/32
 sudo microk8s addons repo add community \
     https://github.com/canonical/microk8s-community-addons \
     --reference feat/strict-fix-multus
@@ -749,30 +710,30 @@ sudo microk8s enable multus
 sudo usermod -a -G snap_microk8s $USER
 ```
 
-Update MicroK8s DNS to point to our DNS server
+Update MicroK8s DNS to point to our DNS server:
 
 ```console
 sudo microk8s disable dns
 sudo microk8s enable dns:10.201.0.100
 ```
 
-Export the Kubernetes configuration and copy that to the `juju-controller` VM:
+Export the Kubernetes configuration and copy it to the `juju-controller` VM:
 
 ```console
 sudo microk8s.config > user-plane-cluster.yaml
 scp user-plane-cluster.yaml juju-controller.mgmt:
 ```
 
-
 In this guide, the following network interfaces are available on the SD-Core `user-plane` VM:
 
 | Interface Name | Purpose                                                                                                                                                           |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | enp6s0         | internal Kubernetes management interface. This maps to the `management` subnet.                                                                                   |
 | enp7s0         | core interface. This maps to the `core` subnet.                                                                                                                   |
 | enp8s0         | access interface. This maps to the `access` subnet. Note that internet egress is required here and routing tables are already set to route gNB generated traffic. |
 
-Now we create the MACVLAN bridges for `enp7s0` and `enp8s0`. These instructions are put into a file that is executed on reboot so the interfaces will come back.
+Now we create the MACVLAN bridges for `enp7s0` and `enp8s0`.
+These instructions are put into a file that is executed on reboot so the interfaces will come back:
 
 ```console
 cat << EOF | sudo tee /etc/rc.local
@@ -791,7 +752,7 @@ Log out of the VM.
 
 ### Prepare gNB Simulator VM
 
-Log in to the `gnbsim` VM.
+Log in to the `gnbsim` VM:
 
 ```console
 multipass shell gnbsim
@@ -800,7 +761,7 @@ multipass shell gnbsim
 Install MicroK8s and add the Multus plugin:
 
 ```console
-sudo snap install microk8s --channel=1.27-strict/stable
+sudo snap install microk8s --channel=1.29-strict/stable
 sudo microk8s enable hostpath-storage
 sudo microk8s addons repo add community \
     https://github.com/canonical/microk8s-community-addons \
@@ -809,14 +770,14 @@ sudo microk8s enable multus
 sudo usermod -a -G snap_microk8s $USER
 ```
 
-Update MicroK8s DNS to point to our DNS server
+Update MicroK8s DNS to point to our DNS server:
 
 ```console
 sudo microk8s disable dns
 sudo microk8s enable dns:10.201.0.100
 ```
 
-Export the Kubernetes configuration and copy that to the `juju-controller` VM:
+Export the Kubernetes configuration and copy it to the `juju-controller` VM:
 
 ```console
 sudo microk8s.config > gnb-cluster.yaml
@@ -826,7 +787,7 @@ scp gnb-cluster.yaml juju-controller.mgmt:
 In this guide, the following network interfaces are available on the `gnbsim` VM:
 
 | Interface Name | Purpose                                                                         |
-| -------------- | ------------------------------------------------------------------------------- |
+|----------------|---------------------------------------------------------------------------------|
 | enp6s0         | internal Kubernetes management interface. This maps to the `management` subnet. |
 | enp7s0         | ran interface. This maps to the `ran` subnet.                                   |
 
@@ -847,30 +808,32 @@ Log out of the VM.
 
 ### Prepare the Juju Controller VM
 
-Log in to the `juju-controller` VM.
+Log in to the `juju-controller` VM:
 
 ```console
 multipass shell juju-controller
 ```
 
-Begin by installing MicroK8s to hold the Juju controller. Configure MetalLB to expose one IP address for the controller (`10.201.0.50`) and one for the Canonical Observability Stack (`10.201.0.51)`.
+Begin by installing MicroK8s to hold the Juju controller.
+Configure MetalLB to expose one IP address for the controller (`10.201.0.50`) and one for the Canonical Observability Stack (`10.201.0.51)`:
 
 ```console
-sudo snap install microk8s --channel=1.27-strict/stable
+sudo snap install microk8s --channel=1.29-strict/stable
 sudo microk8s enable hostpath-storage
 sudo microk8s enable metallb:10.201.0.50-10.201.0.51
 sudo usermod -a -G snap_microk8s $USER
 newgrp snap_microk8s
 ```
 
-Update MicroK8s DNS to point to our DNS server
+Update MicroK8s DNS to point to our DNS server:
 
 ```console
 sudo microk8s disable dns
 sudo microk8s enable dns:10.201.0.100
 ```
 
-Install Juju and bootstrap the controller to the local Microk8s install as a load balancer service. This will expose the Juju controller on the first allocated MetalLB address.
+Install Juju and bootstrap the controller to the local MicroK8s install as a LoadBalancer service.
+This will expose the Juju controller on the first allocated MetalLB address:
 
 ```console
 mkdir -p ~/.local/share/juju
@@ -878,7 +841,9 @@ sudo snap install juju --channel=3.4/stable
 juju bootstrap microk8s --config controller-service-type=loadbalancer sdcore
 ```
 
-At this point, the Juju controller is ready to start managing external clouds. Add the Kubernetes clusters representing the user plane, control plane, and gNB simulator to Juju. This is done by using the Kubernetes configuration file generated when setting up the clusters above.
+At this point, the Juju controller is ready to start managing external clouds.
+Add the Kubernetes clusters representing the user plane, control plane, and gNB simulator to Juju.
+This is done by using the Kubernetes configuration file generated when setting up the clusters above.
 
 ```console
 export KUBECONFIG=control-plane-cluster.yaml
@@ -887,6 +852,12 @@ export KUBECONFIG=user-plane-cluster.yaml
 juju add-k8s user-plane-cluster --controller sdcore
 export KUBECONFIG=gnb-cluster.yaml
 juju add-k8s gnb-cluster --controller sdcore
+```
+
+Install Terraform:
+
+```console
+sudo snap install terraform --classic
 ```
 
 Log out of the VM.
@@ -899,124 +870,287 @@ Due to the newgrp command you will need to log out twice as it started a new she
 
 The following steps build on the Juju controller which was bootstrapped and knows how to manage the SD-Core Control Plane Kubernetes cluster.
 
-First, create a Juju overlay file that specifies the Access and Mobility Management Function (AMF) host name and IP address for sharing with the radios. This host name must be resolvable by the gNB and the IP address must be reachable and resolve to the AMF unit. In the bootstrap step, we set the Control Plane MetalLB range to start at `10.201.0.52`, so that is what we use in the configuration.
+First, we will create a new Terraform module which we will use to deploy SD-Core Control Plane.
+After the successful deployment, we will configure the Access and Mobility Management Function (AMF) IP address for sharing with the radios and the Traefik external hostname for exposing the SD-Core Network Management System (NMS).
+This host name must be resolvable by the gNB and the IP address must be reachable and resolve to the AMF unit.
+In the bootstrap step, we set the Control Plane MetalLB IP range, and that is what we use in the configuration.
+Lastly, the module will expose the Software as a Service offer for the AMF.
 
-Log into the `juju-controller` VM.
+Log into the `juju-controller` VM:
 
 ```console
 multipass shell juju-controller
 ```
 
-Create the Juju overlay file where we specify the IP address and hostname for the AMF.
-
-```console
-cat << EOF > control-plane-overlay.yaml
-applications:
-  amf:
-    options:
-      external-amf-ip: 10.201.0.52
-      external-amf-hostname: amf.mgmt
-EOF
-```
-
-Next, we create a Juju model to represent the Control Plane, using the cloud `control-plane-cluster`, which was created in the Bootstrap step.
+Create Juju model for the SD-Core Control Plane:
 
 ```console
 juju add-model control-plane control-plane-cluster
 ```
 
-Deploy the control plane Juju bundle:
+Create new folder called `terraform`:
 
 ```console
-juju deploy sdcore-control-plane-k8s --trust --channel=beta --overlay control-plane-overlay.yaml
+mkdir terraform
 ```
 
-Expose the Software as a Service offer for the AMF.
+Inside newly created `terraform` folder create a `terraform.tf` file:
 
 ```console
-juju offer control-plane.amf:fiveg-n2
-```
-
-### Checkpoint 3: Does AMF External load balancer service exist ?
-
-You should be able to see the AMF External load balancer service in Kubernetes. Log in to the `control-plane` VM and execute the following command:
-
-```console
-multipass shell control-plane
-microk8s.kubectl get services -A | grep LoadBalancer
-```
-
-This will show output similar to the following, indicating:
-
-- The AMF is exposed on 10.201.0.52 SCTP port 38412
-- The NMS is exposed on 10.201.0.53 TCP ports 80 and 443
-
-These IP addresses came from MetalLB and were configured in the bootstrap step.
-
-```console
-control-plane    amf-external  LoadBalancer  10.152.183.179  10.201.0.52   38412:30408/SCTP
-control-plane    traefik-k8s   LoadBalancer  10.152.183.28   10.201.0.53   80:32349/TCP,443:31925/TCP
-```
-
-## 5. Deploy SD-Core User Plane
-
-On the `juju-controller` VM, create an overlay file for the UPF deployment. The following parameters can be set:
-
-- `access-gateway-ip`: this is the IP address of the gateway that knows how to route traffic from the UPF towards the gNB subnet
-- `access-interface`: the name of the MACVLAN interface on the Kubernetes host cluster to bridge to the `access` subnet
-- `access-ip`: the IP address for the UPF to use on the `access` subnet
-- `core-gateway-ip`: this is the IP address of the gateway that knows how to route traffic from the UPF towards the internet
-- `core-interface`: the name of the MACVLAN interface on the Kubernetes host cluster to bridge to the `core` subnet
-- `core-ip`: the IP address for the UPF to use on the `core` subnet
-- `external-upf-hostname`: the DNS name of the UPF
-- `gnb-subnet`: the subnet CIDR where the gNB radios are reachable.
-
-Create the UPF overlay file on the `juju-controller` VM.
-
-```console
-cat << EOF > upf-overlay.yaml
-applications:
-  upf:
-    options:
-      access-gateway-ip: 10.202.0.1
-      access-interface: access
-      access-ip: 10.202.0.10/24
-      core-gateway-ip: 10.203.0.1
-      core-interface: core
-      core-ip: 10.203.0.10/24
-      external-upf-hostname: upf.mgmt
-      gnb-subnet: 10.204.0.0/24
+cd terraform
+cat << EOF > terraform.tf
+terraform {
+  required_providers {
+    juju = {
+      source  = "juju/juju"
+      version = "~> 0.10.1"
+    }
+  }
+}
 EOF
 ```
 
-Next, we create a Juju model to represent the User Plane, using the cloud `user-plane-cluster`, which was created in the Bootstrap step.
+Create Terraform module:
+
+```console
+cat << EOF > main.tf
+module "sdcore-control-plane" {
+  source = "git::https://github.com/canonical/terraform-juju-sdcore-k8s//modules/sdcore-control-plane-k8s"
+
+  model_name   = "control-plane"
+  create_model = false
+
+  amf_config = {
+    external-amf-hostname = "amf.mgmt"
+  }
+  traefik_config = {
+    routing_mode = "subdomain"
+  }
+}
+
+resource "juju_offer" "amf-fiveg-n2" {
+  model            = "control-plane"
+  application_name = module.sdcore-control-plane.amf_app_name
+  endpoint         = module.sdcore-control-plane.fiveg_n2_endpoint
+}
+
+EOF
+```
+
+Initialize Juju Terraform provider:
+
+```console
+terraform init
+```
+
+Deploy SD-Core Control Plane:
+
+```console
+terraform apply -auto-approve
+```
+
+Monitor the status of the deployment:
+
+```console
+watch -n 1 -c juju status --color --relations
+```
+
+The deployment is ready when all the charms are in the `Active/Idle` state.
+It is normal for `grafana-agent` to remain in waiting state.
+
+Once the deployment is ready, we will proceed to the configuration part.
+
+Log out of the VM.
+
+Get the IP addresses of the AMF and Traefik LoadBalancer services:
+
+Log in to the `control-plane` VM:
+
+```console
+multipass shell control-plane
+```
+
+Get LoadBalancer services:
+
+```console
+microk8s.kubectl get services -A | grep LoadBalancer
+```
+
+This will show output similar to the following:
+
+```console
+control-plane    amf-external  LoadBalancer  10.152.183.179  10.201.0.52   38412:30408/SCTP
+control-plane    traefik       LoadBalancer  10.152.183.28   10.201.0.53   80:32349/TCP,443:31925/TCP
+```
+
+Note both IPs - in this case `10.201.0.52` for the AMF and `10.201.0.53` for Traefik.
+We will need them shortly.
+
+Log out of the VM.
+
+Log into the `juju-controller` VM:
+
+```console
+multipass shell juju-controller
+```
+
+Configure AMF external IP, using the address obtained in the previous step.
+To do that, edit `amf_config` in the `main.tf` file in the `terraform` directory:
+
+```console
+cd terraform
+```
+
+Updated `amf_config` should look like similar to the below:
+
+```
+(...)
+module "sdcore-control-plane" {
+  (...)
+  amf_config = {
+    external-amf-ip       = "10.201.0.52"
+    external-amf-hostname = "amf.mgmt"
+  }
+  (...)
+}
+(...)
+```
+
+Configure Traefik's external hostname, using the address obtained in the previous step.
+To do that, edit `traefik_config` in the `main.tf` file.
+
+Updated `traefik_config` should look like similar to the below:
+
+```
+(...)
+module "sdcore-control-plane" {
+  (...)
+  traefik_config = {
+    routing_mode      = "subdomain"
+    external_hostname = "10.201.0.53.nip.io"
+  }
+  (...)
+}
+(...)
+```
+
+Apply the changes:
+
+```console
+terraform apply -auto-approve
+```
+
+Log out of the VM.
+
+## 5. Deploy SD-Core User Plane
+
+The following steps build on the Juju controller which was bootstrapped and knows how to manage the SD-Core User Plane Kubernetes cluster.
+
+First, we will add SD-Core User Plane to the Terraform module created in the previous step.
+We will provide necessary configuration (please see the list of the config options with the description in the table below) for the User Plane Function (UPF).
+Lastly, we will expose the Software as a Service offer for the UPF.
+
+| Config Option         | Descriptions                                                                                      |
+|-----------------------|---------------------------------------------------------------------------------------------------|
+| access-gateway-ip     | The IP address of the gateway that knows how to route traffic from the UPF towards the gNB subnet |
+| access-interface      | The name of the MACVLAN interface on the Kubernetes host cluster to bridge to the `access` subnet |
+| access-ip             | The IP address for the UPF to use on the `access` subnet                                          |
+| core-gateway-ip       | The IP address of the gateway that knows how to route traffic from the UPF towards the internet   |
+| core-interface        | The name of the MACVLAN interface on the Kubernetes host cluster to bridge to the `core` subnet   |
+| core-ip               | The IP address for the UPF to use on the `core` subnet                                            |
+| external-upf-hostname | The DNS name of the UPF                                                                           |
+| gnb-subnet            | The subnet CIDR where the gNB radios are reachable.                                               |
+
+Log into the `juju-controller` VM:
+
+```console
+multipass shell juju-controller
+```
+
+Create Juju model for the SD-Core Control Plane:
 
 ```console
 juju add-model user-plane user-plane-cluster
 ```
 
-Deploy user plane bundle:
+Enter the `terraform` folder created in the previous step:
 
 ```console
-juju deploy sdcore-user-plane-k8s --trust --channel=beta --overlay upf-overlay.yaml
+cd terraform
 ```
 
-Now expose the UPF service offering with Juju.
+Update the `main.tf` file:
 
 ```console
-juju offer user-plane.upf:fiveg_n4
+cat << EOF >> main.tf
+module "sdcore-user-plane" {
+  source = "git::https://github.com/canonical/terraform-juju-sdcore-k8s//modules/sdcore-user-plane-k8s"
+
+  model_name   = "user-plane"
+  create_model = false
+
+  upf_config = {
+    cni-type              = "macvlan" 
+    access-gateway-ip     = "10.202.0.1"
+    access-interface      = "access"
+    access-ip             = "10.202.0.10/24"
+    core-gateway-ip       = "10.203.0.1"
+    core-interface        = "core"
+    core-ip               = "10.203.0.10/24"
+    external-upf-hostname = "upf.mgmt"
+    gnb-subnet            = "10.204.0.0/24"
+  }
+}
+
+resource "juju_offer" "upf-fiveg-n4" {
+  model            = "user-plane"
+  application_name = module.sdcore-user-plane.upf_app_name
+  endpoint         = module.sdcore-user-plane.fiveg_n4_endpoint
+}
+
+EOF
 ```
 
-### Checkpoint 4: Does UPF External load balancer service exist ?
+Update Juju Terraform provider:
 
-You should be able to see the UPF External load balancer service in Kubernetes. Log in to the `user-plane` VM and display the load balancer service:
+```console
+terraform init
+```
+
+Deploy SD-Core User Plane:
+
+```console
+terraform apply -auto-approve
+```
+
+Monitor the status of the deployment:
+
+```console
+watch -n 1 -c juju status --color --relations
+```
+
+The deployment is ready when the UPF application is in the `Active/Idle` state.
+It is normal for `grafana-agent` to remain in waiting state.
+
+Log out of the VM.
+
+### Checkpoint 3: Does the UPF external LoadBalancer service exist?
+
+You should be able to see the UPF external LoadBalancer service in Kubernetes.
+
+Log in to the `user-plane` VM:
 
 ```console
 multipass shell user-plane
+```
+
+Get the LoadBalancer service:
+
+```console
 microk8s.kubectl get services -A | grep LoadBalancer
 ```
 
-This should produce output similar to the following indicating that the PFCP agent of the UPF is exposed on `10.201.0.200` UDP port 8805
+This should produce output similar to the following indicating that the PFCP agent of the UPF is exposed on `10.201.0.200` UDP port 8805:
 
 ```console
 user-plane  upf-external  LoadBalancer  10.152.183.126  10.201.0.200  8805:31101/UDP
@@ -1024,74 +1158,167 @@ user-plane  upf-external  LoadBalancer  10.152.183.126  10.201.0.200  8805:31101
 
 ## 6. Deploy the gNB Simulator
 
-Create a new Juju model named `gnbsim` on the `juju-controller` VM:
+The following steps build on the Juju controller which was bootstrapped and knows how to manage the gNB Simulator Kubernetes cluster.
+
+First, we will add gNB Simulator to the Terraform module used in the previous steps.
+We will provide necessary configuration (please see the list of the config options with the description in the table below) for the application and integrate the simulator with previously exposed AMF offering.
+Lastly, we will expose the Software as a Service offer for the simulator.
+
+| Config Option           | Descriptions                                                                                                                                  |
+|-------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
+| gnb-interface           | The name of the MACVLAN interface to use on the host                                                                                          |
+| gnb-ip-address          | The IP address to use on the gnb interface                                                                                                    |
+| icmp-packet-destination | The target IP address to ping. If there is no egress to the internet on your core network, any IP that is reachable from the UPF should work. |
+| upf-gateway             | The IP address of the gateway between the RAN and Access networks                                                                             |
+| upf-subnet              | Subnet where the UPFs are located (also called Access network)                                                                                |
+
+Log into the `juju-controller` VM:
+
+```console
+multipass shell juju-controller
+```
+
+Create Juju model for the SD-Core Control Plane:
 
 ```console
 juju add-model gnbsim gnb-cluster
 ```
 
-Deploy the simulator to the `gnbsim-cluster`. The simulator needs to know the following:
-
-- `gnb-interface`: the name of the MACVLAN interface to use on the host
-- `gnb-ip-address`: the IP address to use on the gnb interface
-- `icmp-packet-destination`: the target IP address to ping. If there is no egress to the internet on your core network, any IP that is reachable from the UPF should work.
-- `upf-gateway`: the IP address of the gateway between the RAN and Access networks
-- `upf-subnet`: subnet where the UPFs are located (also called Access network)
+Enter the `terraform` folder created in the previous step:
 
 ```console
-juju deploy sdcore-gnbsim-k8s gnbsim --channel=beta \
---config gnb-interface=ran \
---config gnb-ip-address=10.204.0.10/24 \
---config icmp-packet-destination=8.8.8.8 \
---config upf-gateway=10.204.0.1 \
---config upf-subnet=10.202.0.0/24
+cd terraform
 ```
 
-Now we use the integration between the gnbsim operator and the AMF operator to exchange the AMF location information.
+Update the `main.tf` file:
 
 ```console
-juju consume control-plane.amf
-juju integrate gnbsim:fiveg-n2 amf:fiveg-n2
+cat << EOF >> main.tf
+module "gnbsim" {
+  source = "git::https://github.com/canonical/sdcore-gnbsim-k8s-operator//terraform"
+
+  model_name = "gnbsim"
+  
+  config = {
+    gnb-interface           = "ran"
+    gnb-ip-address          = "10.204.0.10/24"
+    icmp-packet-destination = "8.8.8.8"
+    upf-gateway             = "10.204.0.1"
+    upf-subnet              = "10.202.0.0/24"
+  }
+}
+
+resource "juju_integration" "gnbsim-amf" {
+  model = "gnbsim"
+
+  application {
+    name     = module.gnbsim.app_name
+    endpoint = module.gnbsim.fiveg_n2_endpoint
+  }
+
+  application {
+    offer_url = juju_offer.amf-fiveg-n2.url
+  }
+}
+
+resource "juju_offer" "gnbsim-fiveg-gnb-identity" {
+  model            = "gnbsim"
+  application_name = module.gnbsim.app_name
+  endpoint         = module.gnbsim.fiveg_gnb_identity_endpoint
+}
+
+EOF
 ```
 
-And present the offering of the gNB identity for integrating with the NMS.
+Update Juju Terraform provider:
 
 ```console
-juju offer gnbsim.gnbsim:fiveg_gnb_identity
+terraform init
 ```
+
+Deploy SD-Core User Plane:
+
+```console
+terraform apply -auto-approve
+```
+
+Monitor the status of the deployment:
+
+```console
+watch -n 1 -c juju status --color --relations
+```
+
+The deployment is ready when the `gnbsim` application is in the `Active/Idle` state.
+
+Log out of the VM.
 
 ## 7. Configure SD-Core
 
-Still on the `juju-controller` VM, switch to the `control-plane` model.
+The following steps show how to configure the SD-Core 5G core network.
+
+We will start by creating integrations between the Network Management System (NMS) and the UPF and the gNB Simulator.
+Once the integrations are ready, we will create the core network configuration: a network slice, a device group and a subscriber.
+
+Log into the `juju-controller` VM:
 
 ```console
-juju switch control-plane
+multipass shell juju-controller
 ```
 
-Relate the UPF to the NMS for exchanging identity information.
+Enter the `terraform` folder created in the previous step:
 
 ```console
-juju consume user-plane.upf
-juju integrate upf:fiveg_n4 nms:fiveg_n4
-juju consume gnbsim.gnbsim
-juju integrate gnbsim:fiveg_gnb_identity nms:fiveg_gnb_identity
+cd terraform
 ```
 
-Configure Traefik to use an external hostname:
+Add required integrations to the `main.tf` file used in the previous steps:
 
 ```console
-juju config traefik-k8s external_hostname=10.201.0.53.nip.io
+cat << EOF >> main.tf
+resource "juju_integration" "nms-gnbsim" {
+  model = "control-plane"
+
+  application {
+    name     = module.sdcore-control-plane.nms_app_name
+    endpoint = module.sdcore-control-plane.fiveg_gnb_identity_endpoint
+  }
+
+  application {
+    offer_url = juju_offer.gnbsim-fiveg-gnb-identity.url
+  }
+}
+
+resource "juju_integration" "nms-upf" {
+  model = "control-plane"
+
+  application {
+    name     = module.sdcore-control-plane.nms_app_name
+    endpoint = module.sdcore-control-plane.fiveg_n4_endpoint
+  }
+
+  application {
+    offer_url = juju_offer.upf-fiveg-n4.url
+  }
+}
+
+EOF
 ```
 
-Here, replace `10.201.0.53` with the Application IP address of the `traefik-k8s` application. You can find it by running `juju status traefik-k8s`.
+Apply the changes:
+
+```console
+terraform apply -auto-approve
+```
 
 Retrieve the NMS address:
 
 ```console
-juju run traefik-k8s/0 show-proxied-endpoints
+juju switch control-plane
+juju run traefik/0 show-proxied-endpoints
 ```
 
-The output should be `http://control-plane-nms.10.201.0.53.nip.io/`. Navigate to this address in your browser.
+The output should be `http://control-plane-nms.10.201.0.53.nip.io/`.
+Navigate to this address in your browser.
 
 In the Network Management System (NMS), create a network slice with the following attributes:
 
@@ -1101,14 +1328,17 @@ In the Network Management System (NMS), create a network slice with the followin
 - UPF: `upf.mgmt:8805`
 - gNodeB: `gnbsim-gnbsim-gnbsim (tac:1)`
 
-You should see the following network slice created. Note the device group has been expanded to show the default group that is created in the slice for you.
+You should see the following network slice created.
+Note the device group has been expanded to show the default group that is created in the slice for you.
 
 ```{image} ../images/nms_tutorial_network_slice_with_device_group.png
 :alt: NMS Network Slice
 :align: center
 ```
 
-We will now add a subscriber with the IMSI that was provided to the gNB simulator. Navigate to Subscribers and click on Create. Fill in the following:
+We will now add a subscriber with the IMSI that was provided to the gNB simulator.
+Navigate to Subscribers and click on Create.
+Fill in the following:
 
 - IMSI: `208930100007487`
 - OPC: `981d464c7c52eb6e5036234984ad0bcf`
@@ -1117,108 +1347,193 @@ We will now add a subscriber with the IMSI that was provided to the gNB simulato
 - Network Slice: `Tutorial`
 - Device Group: `Tutorial-default`
 
-## 8. Integrate SD-Core with Observability
+Log out of the VM.
 
-We will integrate the 5G core network with the Canonical Observability Stack (COS). All commands are to be executed on the `juju-controller` VM.
+## 8. Integrate SD-Core with the Canonical Observability Stack (COS)
 
-### Deploy the `cos-lite` bundle
+The following steps show how to integrate the SD-Core 5G core network with the Canonical Observability Stack (COS).
 
-Create a new Juju model named `cos` on the `juju-controller` cloud:
+First, we will add COS to the Terraform module used in the previous steps.
+Next, we will expose the Software as a Service offers for the COS and create integrations with SD-Core 5G core network components.
+
+### Deploy COS Lite
+
+Log into the `juju-controller` VM:
 
 ```console
-juju add-model cos microk8s
+multipass shell juju-controller
 ```
 
-Deploy the `cos-lite` charm bundle. As this is being deployed to the Juju controller's Kubernetes, it will use the second MetalLB IP address (`10.201.0.51`) as its external IP.
+Enter the `terraform` folder created in the previous step:
 
 ```console
-juju deploy cos-lite --trust
+cd terraform
 ```
 
-You can validate the status of the deployment by running `juju status`. COS is ready when all the charms are in the `Active/Idle` state.
-
-### Deploy the `cos-configuration-k8s` charm
-
-Deploy the `cos-configuration-k8s` charm with the following SD-Core COS configuration:
+Add `cos-lite` Terraform module to the `main.tf` file used in the previous steps:
 
 ```console
-juju deploy cos-configuration-k8s \
-  --config git_repo=https://github.com/canonical/sdcore-cos-configuration \
-  --config git_branch=main \
-  --config git_depth=1 \
-  --config grafana_dashboards_path=grafana_dashboards/sdcore/
+cat << EOF >> main.tf
+module "cos-lite" {
+  source = "git::https://github.com/canonical/terraform-juju-sdcore-k8s//modules/external/cos-lite"
+
+  model_name               = "cos-lite"
+  deploy_cos_configuration = true
+  cos_configuration_config = {
+    git_repo                 = "https://github.com/canonical/sdcore-cos-configuration"
+    git_branch               = "main"
+    grafana_dashboards_path  = "grafana_dashboards/sdcore/"
+  }
+}
+
+EOF
 ```
 
-Integrate it to Grafana:
+Expose the Software as a Service offers for the COS:
 
 ```console
-juju integrate cos-configuration-k8s grafana
+cat << EOF >> main.tf
+resource "juju_offer" "prometheus-remote-write" {
+  model            = module.cos-lite.model_name
+  application_name = module.cos-lite.prometheus_app_name
+  endpoint         = "receive-remote-write"
+}
+
+resource "juju_offer" "loki-logging" {
+  model            = module.cos-lite.model_name
+  application_name = module.cos-lite.loki_app_name
+  endpoint         = "logging"
+}
+
+EOF
 ```
 
-### Integrate Grafana Agent with Prometheus
-
-First, offer the following integrations from Prometheus and Loki for use in other models on the `juju-controller` VM:
+Update Juju Terraform provider:
 
 ```console
-juju offer cos.prometheus:receive-remote-write
-juju offer cos.loki:logging
+terraform init
 ```
 
-Then, consume the integrations from the `control-plane` model:
+Deploy COS:
 
 ```console
-juju switch control-plane
-juju consume cos.prometheus
-juju consume cos.loki
+terraform apply -auto-approve
 ```
 
-Integrate `grafana-agent-k8s` (in the `control-plane` model) with `prometheus` and `loki` (in the `cos` model):
+Monitor the status of the deployment:
 
 ```console
-juju integrate prometheus:receive-remote-write grafana-agent-k8s:send-remote-write
-juju integrate loki:logging grafana-agent-k8s:logging-consumer
+juju switch cos-lite
+watch -n 1 -c juju status --color --relations
 ```
 
-Now, do the same for the `user-plane` model:
+The deployment is ready when all the charms are in the `Active/Idle` state.
+
+### Integrate SD-Core with COS Lite
+
+Once the COS deployment is ready, add integrations between SD-Core and COS applications to the `main.tf` file:
 
 ```console
-juju switch user-plane
-juju consume cos.prometheus
-juju consume cos.loki
-juju integrate prometheus:receive-remote-write grafana-agent-k8s:send-remote-write
-juju integrate loki:logging grafana-agent-k8s:logging-consumer
+cat << EOF >> main.tf
+resource "juju_integration" "control-plane-prometheus" {
+  model = "control-plane"
+
+  application {
+    name     = module.sdcore-control-plane.grafana_agent_app_name
+    endpoint = module.sdcore-control-plane.send_remote_write_endpoint
+  }
+
+  application {
+    offer_url = juju_offer.prometheus-remote-write.url
+  }
+}
+
+resource "juju_integration" "control-plane-loki" {
+  model = "control-plane"
+
+  application {
+    name     = module.sdcore-control-plane.grafana_agent_app_name
+    endpoint = module.sdcore-control-plane.logging_consumer_endpoint
+  }
+
+  application {
+    offer_url = juju_offer.loki-logging.url
+  }
+}
+
+resource "juju_integration" "user-plane-prometheus" {
+  model = "user-plane"
+
+  application {
+    name     = module.sdcore-user-plane.grafana_agent_app_name
+    endpoint = module.sdcore-user-plane.send_remote_write_endpoint
+  }
+
+  application {
+    offer_url = juju_offer.prometheus-remote-write.url
+  }
+}
+
+resource "juju_integration" "user-plane-loki" {
+  model = "user-plane"
+
+  application {
+    name     = module.sdcore-user-plane.grafana_agent_app_name
+    endpoint = module.sdcore-user-plane.logging_consumer_endpoint
+  }
+
+  application {
+    offer_url = juju_offer.loki-logging.url
+  }
+}
+
+EOF
 ```
 
-### Login to Grafana
-
-Retrieve the Grafana admin password on the `juju-controller` VM:
+Apply the changes:
 
 ```console
-juju switch cos
+terraform apply -auto-approve
+```
+
+## Checkpoint 4: Is Grafana dashboard available?
+
+From the `juju-controller` VM, retrieve the Grafana URL and admin password:
+
+```console
+juju switch cos-lite
 juju run grafana/leader get-admin-password
 ```
 
 This produces output similar to the following:
 
-```console
+```
 Running operation 1 with 1 task
   - task 2 on unit-grafana-0
 
 Waiting for task 2...
 admin-password: c72uEq8FyGRo
-url: http://10.201.0.51/cos-grafana
-
+url: http://10.201.0.51/cos-lite-grafana
 ```
 
-## Checkpoint 5: Is Grafana dashboard available ?
+```{note}
+Grafana can be accessed using both `http` (as returned by the command above) or `https`.
+```
 
-In your browser, navigate to the URL from the output (`https://10.201.0.51/cos-grafana`). Login using the "admin" username and the admin password provided in the last command. Click on "Dashboards" -> "Browse" and select "5G Network Overview".
+In your browser, navigate to the URL from the output (`https://10.201.0.51/cos-grafana`).
+Login using the "admin" username and the admin password provided in the last command.
+Click on "Dashboards" -> "Browse" and select "5G Network Overview".
 
-This dashboard presents an overview of your 5G Network status. Keep this page open, we will revisit it shortly.
+This dashboard presents an overview of your 5G Network status.
+Keep this page open, we will revisit it shortly.
 
 ```{image} ../images/grafana_5g_dashboard_sim_before.png
 :alt: Initial Grafana dashboard showing UPF status
 :align: center
+```
+
+```{note}
+It may take up to 5 minutes for the relevant metrics to be available in Prometheus.
 ```
 
 ## 9. Run the 5G simulation
@@ -1235,11 +1550,9 @@ Start the simulation.
 juju run gnbsim/leader start-simulation
 ```
 
-The simulation executed successfully if you see `success: "true"` as one of the
-output messages:
+The simulation executed successfully if you see `success: "true"` as one of the output messages:
 
-```console
-ubuntu@juju-controller:~$ juju run gnbsim/leader start-simulation
+```
 Running operation 1 with 1 task
   - task 2 on unit-gnbsim-0
 
@@ -1248,7 +1561,7 @@ info: run juju debug-log to get more information.
 success: "true"
 ```
 
-## Checkpoint 6: Check the simulation logs to see the communication between elements and the data exchange
+## Checkpoint 5: Check the simulation logs to see the communication between elements and the data exchange
 
 ### gNB Simulation Logs
 
@@ -1264,7 +1577,10 @@ This will emit the full log of the simulation starting with the following messag
 unit-gnbsim-0: 16:43:50 INFO unit.gnbsim/0.juju-log gnbsim simulation output:
 ```
 
-As there is a lot of output, we can better understand if we filter by specific elements. For example, let's take a look at the control plane transport of the log. To do that, we search for `ControlPlaneTransport` in the Juju debug-log. This shows the simulator locating the AMF and exchanging data with it.
+As there is a lot of output, we can better understand if we filter by specific elements.
+For example, let's take a look at the control plane transport of the log.
+To do that, we search for `ControlPlaneTransport` in the Juju debug-log.
+This shows the simulator locating the AMF and exchanging data with it.
 
 ```console
 $ juju debug-log | grep ControlPlaneTransport
@@ -1285,7 +1601,7 @@ juju debug-log | grep imsi-208930100007487
 
 You may view the control plane logs by logging into the control plane cluster and using Kubernetes commands as follows:
 
-```bash
+```console
 microk8s.kubectl logs -n control-plane -c amf amf-0 --tail 70
 microk8s.kubectl logs -n control-plane -c ausf ausf-0 --tail 70
 microk8s.kubectl logs -n control-plane -c nrf nrf-0 --tail 70
@@ -1296,11 +1612,13 @@ microk8s.kubectl logs -n control-plane -c udm udm-0 --tail 70
 microk8s.kubectl logs -n control-plane -c udr udr-0 --tail 70
 ```
 
-## Checkpoint 7: View the metrics
+## Checkpoint 6: View the metrics
 
 ### Grafana Metrics
 
-You can also revisit the Grafana dashboard to view the metrics for the test run. You can see the IMSI is connected and has received an IP address. There is now one active PDU session, and the ping test throughput can be seen in the graphs.
+You can also revisit the Grafana dashboard to view the metrics for the test run.
+You can see the IMSI is connected and has received an IP address.
+There is now one active PDU session, and the ping test throughput can be seen in the graphs.
 
 ```{image} ../images/grafana_5g_dashboard_sim_after.png
 :alt: Grafana dashboard showing throughput metrics
@@ -1309,11 +1627,12 @@ You can also revisit the Grafana dashboard to view the metrics for the test run.
 
 ## 10. Review
 
-We have deployed 4 Kubernetes clusters, bootstrapped a Juju controller to manage them all, and deployed portions of the Charmed 5g SD-Core software according to CUPS principles. You know have 5 Juju models as follows
+We have deployed 4 Kubernetes clusters, bootstrapped a Juju controller to manage them all, and deployed portions of the Charmed 5G SD-Core software according to CUPS principles.
+You now have 5 Juju models as follows:
 
 - `control-plane` where all the control functions are deployed
 - `controller` where Juju manages state of the models
-- `cos` where the Canonical Observability Stack is deployed
+- `cos-lite` where the Canonical Observability Stack is deployed
 - `gnbsim` where the gNB simulator is deployed
 - `user-plane` where all the user plane function is deployed
 
@@ -1321,12 +1640,28 @@ You have learned how to:
 
 - view the logs for the various functions
 - manage the integrations between deployed functions
-- run a simulation testing data flow through the 5g core
-- view the metrics produced by the 5g core
+- run a simulation testing data flow through the 5G core
+- view the metrics produced by the 5G core
+
+```{note}
+For your convenience, a complete Terraform module covering the deployments and integrations from this tutorial, is available in [this Git repository](https://github.com/canonical/charmed-5g).
+All necessary files are in the `examples/terraform/mastering` directory.
+```
 
 ## 11. Cleaning up
 
-Juju makes it simple to cleanly remove all the deployed applications by simply removing the model itself. To completely remove all deployments, use the following:
+Destroy Terraform deployment:
+
+```console
+terraform destroy -auto-approve
+```
+
+```{note}
+Terraform does not remove anything from the working directory.
+If needed, please clean up the `terraform` directory manually by removing everything except for the `main.tf` and `terraform.tf` files.
+```
+
+Destroy Juju controller:
 
 ```bash
 juju destroy-controller --destroy-all-models sdcore --destroy-storage
@@ -1358,17 +1693,10 @@ If required, all the VMs can be permanently removed:
 multipass purge
 ```
 
-Remove the initially created projects and store pool from the LXD:
-
-```console
-lxc project delete sdcore
-lxc project delete multipass
-lxc storage delete sdcore
-```
-
-Delete the local network bridges that are created for LXD. Remove the configuration file from the host machine and apply the network configuration:
+Remove the configuration file from the host machine:
 
 ```console
 sudo rm /etc/netplan/99-sdcore-networks.yaml
-sudo netplan apply
 ```
+
+Reboot the host machine to restore the network configuration to the original state.
