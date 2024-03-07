@@ -1,7 +1,7 @@
 # Mastering
 
-In this tutorial, we will deploy and run the SD-Core 5G core network following Control and User Plane Separation (CUPS) principles. 
-The radio and cell phone simulator will also be deployed on an isolated cluster. 
+In this tutorial, we will deploy and run the SD-Core 5G core network following Control and User Plane Separation (CUPS) principles.
+The radio and cell phone simulator will also be deployed on an isolated cluster.
 [Multipass](https://multipass.run/) is used to create separate VMs connected with [LXD](https://ubuntu.com/lxd) networking.
 
 ## 1. Prepare the Host machine
@@ -102,6 +102,7 @@ sudo snap install multipass
 ```
 
 Set LXD as local driver:
+
 ```console
 multipass set local.driver=lxd
 ```
@@ -150,7 +151,7 @@ multipass list
 
 The output should be similar to the following:
 
-```console
+```
 Name                    State             IPv4             Image
 juju-controller         Running           10.231.204.5     Ubuntu 22.04 LTS
 core-router             Running           10.231.204.200   Ubuntu 22.04 LTS
@@ -267,7 +268,7 @@ sudo systemctl status dnsmasq
 
 The expected result should be similar to the below:
 
-```console
+```
 dnsmasq.service - dnsmasq - A lightweight DHCP and caching DNS server
      Loaded: loaded (/lib/systemd/system/dnsmasq.service; enabled; vendor preset: enabled)
      Active: active (running) since Thu 2024-01-11 13:46:34 +03; 6ms ago
@@ -344,7 +345,7 @@ resolvectl
 
 You should see the new DNS server on `Link 3`:
 
-```console
+```
 Link 3 (enp6s0)
 Current Scopes: DNS
      Protocols: +DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
@@ -360,7 +361,7 @@ ip route
 
 You should see the following routes in addition to the regular host routes:
 
-```console
+```
 10.201.0.0/24 dev enp6s0 proto kernel scope link src 10.201.0.102
 10.202.0.0/24 dev enp8s0 proto kernel scope link src 10.202.0.100
 10.203.0.0/24 dev enp7s0 proto kernel scope link src 10.203.0.100
@@ -469,7 +470,7 @@ ip route
 
 You should see the following routes in addition to the regular host routes:
 
-```console
+```
 10.201.0.0/24 dev enp6s0 proto kernel scope link src 10.201.0.103
 10.202.0.0/24 via 10.204.0.1 dev enp7s0 proto static
 10.204.0.0/24 dev enp7s0 proto kernel scope link src 10.204.0.100
@@ -667,7 +668,7 @@ sudo microk8s enable hostpath-storage
 sudo usermod -a -G snap_microk8s $USER
 ```
 
-The control plane needs to expose two services: the AMF and the NMS. 
+The control plane needs to expose two services: the AMF and the NMS.
 In this step, we enable the MetalLB add on in MicroK8s, and give it a range of two IP addresses:
 
 ```console
@@ -815,7 +816,7 @@ Log in to the `juju-controller` VM:
 multipass shell juju-controller
 ```
 
-Begin by installing MicroK8s to hold the Juju controller. 
+Begin by installing MicroK8s to hold the Juju controller.
 Configure MetalLB to expose one IP address for the controller (`10.201.0.50`) and one for the Canonical Observability Stack (`10.201.0.51)`:
 
 ```console
@@ -842,8 +843,8 @@ sudo snap install juju --channel=3.4/stable
 juju bootstrap microk8s --config controller-service-type=loadbalancer sdcore
 ```
 
-At this point, the Juju controller is ready to start managing external clouds. 
-Add the Kubernetes clusters representing the user plane, control plane, and gNB simulator to Juju. 
+At this point, the Juju controller is ready to start managing external clouds.
+Add the Kubernetes clusters representing the user plane, control plane, and gNB simulator to Juju.
 This is done by using the Kubernetes configuration file generated when setting up the clusters above.
 
 ```console
@@ -956,7 +957,7 @@ Monitor the status of the deployment:
 watch -n 1 -c juju status --color --relations
 ```
 
-The deployment is ready when all the charms are in the `Active/Idle` state. 
+The deployment is ready when all the charms are in the `Active/Idle` state.
 It is normal for `grafana-agent` to remain in waiting state.
 
 Once the deployment is ready, we will proceed to the configuration part.
@@ -984,8 +985,8 @@ control-plane    amf-external  LoadBalancer  10.152.183.179  10.201.0.52   38412
 control-plane    traefik       LoadBalancer  10.152.183.28   10.201.0.53   80:32349/TCP,443:31925/TCP
 ```
 
-Note both IPs - in this case `10.201.0.52` for the AMF and `10.201.0.53` for Traefik. 
-We will need them shortly. 
+Note both IPs - in this case `10.201.0.52` for the AMF and `10.201.0.53` for Traefik.
+We will need them shortly.
 
 Log out of the VM.
 
@@ -995,7 +996,7 @@ Log into the `juju-controller` VM:
 multipass shell juju-controller
 ```
 
-Configure AMF external IP, using the address obtained in the previous step. 
+Configure AMF external IP, using the address obtained in the previous step.
 To do that, edit `amf_config` in the `main.tf` file in the `terraform` directory:
 
 ```console
@@ -1022,7 +1023,7 @@ To do that, edit `traefik_config` in the `main.tf` file.
 
 Updated `traefik_config` should look like similar to the below:
 
-```console
+```
 (...)
 module "sdcore-control-plane" {
   (...)
@@ -1048,7 +1049,7 @@ Log out of the VM.
 The following steps build on the Juju controller which was bootstrapped and knows how to manage the SD-Core User Plane Kubernetes cluster.
 
 First, we will add SD-Core User Plane to the Terraform module created in the previous step.
-We will provide necessary configuration (please see the list of the config options with the description in the table below) for the User Plane Function (UPF). 
+We will provide necessary configuration (please see the list of the config options with the description in the table below) for the User Plane Function (UPF).
 Lastly, we will expose the Software as a Service offer for the UPF.
 
 | Config Option         | Descriptions                                                                                      |
@@ -1130,7 +1131,7 @@ Monitor the status of the deployment:
 watch -n 1 -c juju status --color --relations
 ```
 
-The deployment is ready when the UPF application is in the `Active/Idle` state. 
+The deployment is ready when the UPF application is in the `Active/Idle` state.
 It is normal for `grafana-agent` to remain in waiting state.
 
 Log out of the VM.
@@ -1162,7 +1163,7 @@ user-plane  upf-external  LoadBalancer  10.152.183.126  10.201.0.200  8805:31101
 The following steps build on the Juju controller which was bootstrapped and knows how to manage the gNB Simulator Kubernetes cluster.
 
 First, we will add gNB Simulator to the Terraform module used in the previous steps.
-We will provide necessary configuration (please see the list of the config options with the description in the table below) for the application and integrate the simulator with previously exposed AMF offering. 
+We will provide necessary configuration (please see the list of the config options with the description in the table below) for the application and integrate the simulator with previously exposed AMF offering.
 Lastly, we will expose the Software as a Service offer for the simulator.
 
 | Config Option           | Descriptions                                                                                                                                  |
@@ -1249,7 +1250,7 @@ Monitor the status of the deployment:
 watch -n 1 -c juju status --color --relations
 ```
 
-The deployment is ready when the `gnbsim` application is in the `Active/Idle` state. 
+The deployment is ready when the `gnbsim` application is in the `Active/Idle` state.
 It is normal for `grafana-agent` to remain in waiting state.
 
 Log out of the VM.
@@ -1319,7 +1320,7 @@ juju switch control-plane
 juju run traefik/0 show-proxied-endpoints
 ```
 
-The output should be `http://control-plane-nms.10.201.0.53.nip.io/`. 
+The output should be `http://control-plane-nms.10.201.0.53.nip.io/`.
 Navigate to this address in your browser.
 
 In the Network Management System (NMS), create a network slice with the following attributes:
@@ -1330,7 +1331,7 @@ In the Network Management System (NMS), create a network slice with the followin
 - UPF: `upf.mgmt:8805`
 - gNodeB: `gnbsim-gnbsim-gnbsim (tac:1)`
 
-You should see the following network slice created. 
+You should see the following network slice created.
 Note the device group has been expanded to show the default group that is created in the slice for you.
 
 ```{image} ../images/nms_tutorial_network_slice_with_device_group.png
@@ -1338,8 +1339,8 @@ Note the device group has been expanded to show the default group that is create
 :align: center
 ```
 
-We will now add a subscriber with the IMSI that was provided to the gNB simulator. 
-Navigate to Subscribers and click on Create. 
+We will now add a subscriber with the IMSI that was provided to the gNB simulator.
+Navigate to Subscribers and click on Create.
 Fill in the following:
 
 - IMSI: `208930100007487`
@@ -1349,14 +1350,28 @@ Fill in the following:
 - Network Slice: `Tutorial`
 - Device Group: `Tutorial-default`
 
+Log out of the VM.
+
 ## 8. Integrate SD-Core with the Canonical Observability Stack (COS)
 
 The following steps show how to integrate the SD-Core 5G core network with the Canonical Observability Stack (COS).
 
-First, we will add COS to the Terraform module used in the previous steps. 
+First, we will add COS to the Terraform module used in the previous steps.
 Next, we will expose the Software as a Service offers for the COS and create integrations with SD-Core 5G core network components.
 
 ### Deploy COS Lite
+
+Log into the `juju-controller` VM:
+
+```console
+multipass shell juju-controller
+```
+
+Enter the `terraform` folder created in the previous step:
+
+```console
+cd terraform
+```
 
 Add `cos-lite` Terraform module to the `main.tf` file used in the previous steps:
 
@@ -1495,7 +1510,7 @@ juju run grafana/leader get-admin-password
 
 This produces output similar to the following:
 
-```console
+```
 Running operation 1 with 1 task
   - task 2 on unit-grafana-0
 
@@ -1508,11 +1523,11 @@ url: http://10.201.0.51/cos-lite-grafana
 Grafana can be accessed using both `http` (as returned by the command above) or `https`.
 ```
 
-In your browser, navigate to the URL from the output (`https://10.201.0.51/cos-grafana`). 
-Login using the "admin" username and the admin password provided in the last command. 
+In your browser, navigate to the URL from the output (`https://10.201.0.51/cos-grafana`).
+Login using the "admin" username and the admin password provided in the last command.
 Click on "Dashboards" -> "Browse" and select "5G Network Overview".
 
-This dashboard presents an overview of your 5G Network status. 
+This dashboard presents an overview of your 5G Network status.
 Keep this page open, we will revisit it shortly.
 
 ```{image} ../images/grafana_5g_dashboard_sim_before.png
@@ -1540,8 +1555,7 @@ juju run gnbsim/leader start-simulation
 
 The simulation executed successfully if you see `success: "true"` as one of the output messages:
 
-```console
-ubuntu@juju-controller:~$ juju run gnbsim/leader start-simulation
+```
 Running operation 1 with 1 task
   - task 2 on unit-gnbsim-0
 
@@ -1566,9 +1580,9 @@ This will emit the full log of the simulation starting with the following messag
 unit-gnbsim-0: 16:43:50 INFO unit.gnbsim/0.juju-log gnbsim simulation output:
 ```
 
-As there is a lot of output, we can better understand if we filter by specific elements. 
-For example, let's take a look at the control plane transport of the log. 
-To do that, we search for `ControlPlaneTransport` in the Juju debug-log. 
+As there is a lot of output, we can better understand if we filter by specific elements.
+For example, let's take a look at the control plane transport of the log.
+To do that, we search for `ControlPlaneTransport` in the Juju debug-log.
 This shows the simulator locating the AMF and exchanging data with it.
 
 ```console
@@ -1605,8 +1619,8 @@ microk8s.kubectl logs -n control-plane -c udr udr-0 --tail 70
 
 ### Grafana Metrics
 
-You can also revisit the Grafana dashboard to view the metrics for the test run. 
-You can see the IMSI is connected and has received an IP address. 
+You can also revisit the Grafana dashboard to view the metrics for the test run.
+You can see the IMSI is connected and has received an IP address.
 There is now one active PDU session, and the ping test throughput can be seen in the graphs.
 
 ```{image} ../images/grafana_5g_dashboard_sim_after.png
@@ -1616,7 +1630,7 @@ There is now one active PDU session, and the ping test throughput can be seen in
 
 ## 10. Review
 
-We have deployed 4 Kubernetes clusters, bootstrapped a Juju controller to manage them all, and deployed portions of the Charmed 5G SD-Core software according to CUPS principles. 
+We have deployed 4 Kubernetes clusters, bootstrapped a Juju controller to manage them all, and deployed portions of the Charmed 5G SD-Core software according to CUPS principles.
 You now have 5 Juju models as follows:
 
 - `control-plane` where all the control functions are deployed
@@ -1646,9 +1660,8 @@ terraform destroy -auto-approve
 ```
 
 ```{note}
-Terraform does not remove anything from the working directory. If needed, please clean up
-the `terraform` directory manually by removing everything except for the `main.tf` 
-and `terraform.tf` files.
+Terraform does not remove anything from the working directory.
+If needed, please clean up the `terraform` directory manually by removing everything except for the `main.tf` and `terraform.tf` files.
 ```
 
 Destroy Juju controller:
