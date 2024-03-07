@@ -95,6 +95,7 @@ PDU
 PFCP
 RAN
 resolv
+requirer
 RDRAND
 Rockcraft
 Ryzen
@@ -102,6 +103,7 @@ SCTP
 sdcore
 sdcore-k8s
 SMF
+sub-module
 subnet
 subnets
 systemd
