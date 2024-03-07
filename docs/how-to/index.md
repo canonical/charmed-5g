@@ -8,6 +8,7 @@ These how-to guides cover key operations and processes in Charmed 5G.
 :maxdepth: 1
 
 deploy_sdcore_standalone
+deploy_sdcore_aws
 deploy_sdcore_cups
 deploy_sdcore_gnbsim
 integrate_sdcore_with_observability
