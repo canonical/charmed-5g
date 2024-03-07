@@ -650,8 +650,6 @@ done
 You may now delete the `tutorial_rsa` and `tutorial_rsa.pub` files from the host.
 ```
 
-Log out of the VM.
-
 ### Prepare SD-Core Control Plane VM
 
 Login to the `control-plane` VM:
