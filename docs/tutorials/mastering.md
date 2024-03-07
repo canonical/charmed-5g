@@ -1249,7 +1249,6 @@ watch -n 1 -c juju status --color --relations
 ```
 
 The deployment is ready when the `gnbsim` application is in the `Active/Idle` state.
-It is normal for `grafana-agent` to remain in waiting state.
 
 Log out of the VM.
 
