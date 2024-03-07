@@ -93,6 +93,7 @@ PCF
 pdpe
 PDU
 PFCP
+Pre
 RAN
 resolv
 requirer
@@ -109,6 +110,7 @@ subnets
 systemd
 TCP
 Terraform
+Terraform's
 TLS
 Traefik
 UDM
