@@ -95,14 +95,16 @@ lxd init --auto
 
 ### Install and configure Multipass
 
-Install Multipass and set LXD as local driver:
+Install Multipass:
 
 ```console
 sudo snap install multipass
-multipass set local.driver=lxd
 ```
 
-Wait a few seconds if you get the output: `set failed: cannot connect to the multipass socket` and retry setting local driver.
+Set LXD as local driver:
+```console
+multipass set local.driver=lxd
+```
 
 Connect Multipass to LXD:
 
@@ -1681,10 +1683,10 @@ If required, all the VMs can be permanently removed:
 multipass purge
 ```
 
-Delete the local network bridges that are created for LXD.
-Remove the configuration file from the host machine and apply the network configuration:
+Remove the configuration file from the host machine:
 
 ```console
 sudo rm /etc/netplan/99-sdcore-networks.yaml
-sudo netplan apply
 ```
+
+Reboot the host machine to restore the network configuration to the original state.
