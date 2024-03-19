@@ -6,4 +6,5 @@
 charms
 deployment_options
 networking
+public_clouds
 ```
