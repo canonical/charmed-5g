@@ -62,6 +62,7 @@ Explanation
 Charmed 5G is a member of the Ubuntu family. It’s an open source project that warmly welcomes community projects, contributions, suggestions, fixes and constructive feedback.
 
 - [Ubuntu Code of conduct](https://ubuntu.com/community/ethos/code-of-conduct)
+- Meet the community and chat with us on [Matrix](https://matrix.to/#/#charmhub-charmed5g:ubuntu.com)
 - [Open a bug](https://github.com/canonical/charmed-5g/issues)
 - [Contribute](https://github.com/canonical/charmed-5g/)
 
